@@ -56,7 +56,7 @@ use 5.010;
 use Cwd qw/ abs_path /;
 my $me = abs_path($0);
 
-use Test::More tests => 7;
+use Test::More tests => 9;
 use Data::Dumper;
 use Carp qw/ croak confess /;
 
@@ -93,7 +93,7 @@ if ( exists $ENV{'DRUPAL_TEST_CREDS'} ) {
 }
 
 SKIP: {
-  skip "No database credentials supplied", 4, if $skip;
+  skip "No database credentials supplied", 7, if $skip;
 
   ###########
 
@@ -155,11 +155,31 @@ SKIP: {
                      weight /;
 
   is_deeply( [ sort @cols ], [ sort @wanted_cols ],
-    'Get correct column names from membership_entity_secondary_member table.');
+    'Get correct column names from membership_entity_secondary_member table.' );
 
   ############
 
+  # We know there is at least one Membership type in a working installation
+  
+  my $sql = qq|
+    SELECT COUNT(id) AS count
+    FROM membership_entity_type
+  |;
 
+  $sth = $dbh->prepare( $sql );
+
+  ok( $sth->execute(),
+    'Execute a SELECT on the membership_entity_type table.' );
+
+  ok( $sth->fetchrow_hashref->{'count'} > 0,
+    'SELECT COUNT(id) FROM membership_entity_type > 0' );
+
+  # But we can't assume anything else, even that there is a single row in the
+  # membership_entity or membership_entity_term tables, so we can't really 
+  # test anything else ...
+  
+  ##############
+              #
  say "+" x 70;
 
 } # end SKIP block
