@@ -1,12 +1,10 @@
 package CMS::Drupal::Modules::MembershipEntity::Term;
 
+# ABSTRACT: Perl interface to a Drupal MembershipEntity membership term
+
 use strict;
 use warnings;
 
-use vars qw($VERSION $VERSION_DATE);
-$VERSION = "0.99";
-$VERSION_DATE = "June, 2015";
- 
 use Moo;
 use Types::Standard qw/ :all /;
 use Data::Dumper;
@@ -102,7 +100,7 @@ B<was_renewal> Returns true if the Term was a renewal, as defined by the Term's 
 
 =head1 AUTHOR
 
-Author: Nick Tonkin (nick@websitebackendsolutions.com)
+Author: Nick Tonkin (tonkin@cpan.org)
 
 =head1 COPYRIGHT
    
@@ -114,11 +112,11 @@ You may distribute this module under the same license as Perl itself.
 
 =head1 SEE ALSO
 
-L<CMS::Drupal>
+L<CMS::Drupal|CMS::Drupal>
 
-L<CMS::Drupal::Modules::MembershipEntity>
+L<CMS::Drupal::Modules::MembershipEntity|CMS::Drupal::Modules::MembershipEntity>
 
-L<CMS::Drupal::Modules::MembershipEntity::Membership>.
+L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Membership>
  
 =cut
 

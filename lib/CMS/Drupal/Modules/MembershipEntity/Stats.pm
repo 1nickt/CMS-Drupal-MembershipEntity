@@ -1,4 +1,6 @@
-package CMS::Drupal::Modules::MembershipEntity;
+package CMS::Drupal::Modules::MembershipEntity::Stats;
+
+# ABSTRACT: Generate statistics about Drupal MembershipEntity memberships on a Drupal site. 
 
 use Moo;
 use Types::Standard qw/ :all /;
