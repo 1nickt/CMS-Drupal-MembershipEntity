@@ -1,5 +1,8 @@
 package CMS::Drupal::Modules::MembershipEntity;
 
+
+# ABSTRACT Perl interface to Drupal MembershipEntity entities
+
 use Moo;
 use Types::Standard qw/ :all /;
 use CMS::Drupal::Modules::MembershipEntity::Membership;

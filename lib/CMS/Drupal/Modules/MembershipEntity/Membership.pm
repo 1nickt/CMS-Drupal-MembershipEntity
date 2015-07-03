@@ -1,12 +1,11 @@
 package CMS::Drupal::Modules::MembershipEntity::Membership;
 
+# ABSTRACT: Perl interface to a Drupal MembershipEntity membership
+
 use strict;
 use warnings;
+use 5.010;
 
-use vars qw($VERSION $VERSION_DATE);
-$VERSION = "0.99";
-$VERSION_DATE = "June, 2015";
- 
 use Moo;
 use Types::Standard qw/ :all /;
 use Data::Dumper;
@@ -47,7 +46,7 @@ $mem = CMS::Drupal::Modules::MembershipEntity::Membership->new(
 
 Note: This module does not currently create or edit Memberships.
 
-This module is not designed to be called directly, although it can be. This module is called by L<CMS::Drupal::Modules::MembershipEntity>, which has a method to retrieve all Memberships and create an object for each of them. Error checking is handled in the latter module, so if you use this module directly you will have to do your own error checking, for example, to make sure that the Membership actually has at least one Term associated with it. (Yes, I know it should be impossible not to, but it happens. This is Drupal we are dealing with.)
+This module is not designed to be called directly, although it can be. This module is called by L<CMS::Drupal::Modules::MembershipEntity|CMS::Drupal::Modules::MembershipEntity>, which has a method to retrieve all Memberships and create an object for each of them. Error checking is handled in the latter module, so if you use this module directly you will have to do your own error checking, for example, to make sure that the Membership actually has at least one Term associated with it. (Yes, I know it should be impossible not to, but it happens. This is Drupal we are dealing with.)
 
 =head2 PARAMETERS
 
@@ -67,11 +66,11 @@ B<member_id> The unique Member ID that Drupal assigns to the Membership. This is
 
 B<type> The Membership type.
 
-B<terms> A hashref containing a L<CMS::Drupal::Modules::MembershipEntity::Term> object for each term belonging to the Membership, keyed by the B<tid> (term ID).
+B<terms> A hashref containing a L<CMS::Drupal::Modules::MembershipEntity::Term|CMS::Drupal::Modules::MembershipEntity::Term> object for each term belonging to the Membership, keyed by the B<tid> (term ID).
 
 =head1 AUTHOR
   
-Author: Nick Tonkin (nick@websitebackendsolutions.com)
+Author: Nick Tonkin (tonkin@cpan.org)
   
 =head1 COPYRIGHT
   
@@ -83,11 +82,11 @@ You may distribute this module under the same license as Perl itself.
   
 =head1 SEE ALSO
   
-L<CMS::Drupal>
+L<CMS::Drupal|CMS::Drupal>
 
-L<CMS::Drupal::Modules::MembershipEntity>
+L<CMS::Drupal::Modules::MembershipEntity|CMS::Drupal::Modules::MembershipEntity>
 
-L<CMS::Drupal::Modules::MembershipEntity::Term>.
+L<CMS::Drupal::Modules::MembershipEntity::Term|CMS::Drupal::Modules::MembershipEntity::Term>
   
 =cut
 
