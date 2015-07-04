@@ -1,187 +1,50 @@
 #!/usr/bin/env perl
 
-##############################################################################
-#
-# This is t/MembershipEntity01.t It tests the 
-# CMS::Drupal::Modules::MembershipEntity module against a real Drupal
-# database. It looks in your environment to see if you have provided
-# connection information.
-#
-# So if you want to test against your Drupal DB, you must set the variable
-#
-# DRUPAL_TEST_CREDS
-#
-# in your environment, exactly as follows:
-#
-# required fields are 
-#   database - name of your DB
-#   driver   - your dbi:driver ... mysql, Pg or SQLite
-#
-# optional fields are
-#   user     - your DB user name
-#   password - your DB password
-#   host     - your DB server hostname
-#   port     - which port to connect on
-#   prefix   - your database table schema prefix, if any
-#
-# All these fields and values must be joined together in one string with no
-# spaces, and separated with commas.
-#
-# Examples:
-#
-# database,foo,driver,SQLite
-# database,foo,driver,Pg
-# database,foo,driver,mysql,user,bar,password,baz,host,localhost,port,3306,prefix,My_
-#
-# You can set an environment variable in many ways. To make it semi permanent,
-# put it in your .bashrc or .bash_profile or whatever you have.
-#
-# If you just want to run this test once, you can just do this from your
-# command prompt:
-#
-# $ DRUPAL_TEST_CREDS=database,foo,driver,SQLite
-# $ perl ./MembershipEntity_01.t
-#
-# If you report a bug or ask for support for this module, the first thing I 
-# will ask for is the output from these tests, so make sure and do this, 'k?
-#
-# You really should want to know if your setup is working, anyway.
-#
-#############################################################################
-
 use strict;
 use warnings;
 use 5.010;
 
-use Cwd qw/ abs_path /;
-my $me = abs_path($0);
+use Test::More tests => 10;
+use DBI;
 
-use Test::More tests => 9;
-use Data::Dumper;
-use Carp qw/ croak confess /;
+say '-' x 78;
 
+say "CMS::Drupal::Modules::MembershipEntity ";
+say "test 01 - object and parameter validation.\n";
 
-say '+' x 70;
-
-say "CMS::Drupal::Modules::MembershipEntity test 01 - object and parameter validation.";
-
-use_ok( 'CMS::Drupal',
-  'use() the parent CMS::Drupal module.' );
+my $dbh = DBI->connect('DBI:Mock:', '', '', { RaiseError => 1 });
 
 use_ok( 'CMS::Drupal::Modules::MembershipEntity',
   'use() this module.' );
 
-my $drupal = CMS::Drupal->new;
-my %params;
-my $skip = 0;
+ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new() },
+  'Correctly fail to instantiate an object with no parameters.' );
 
-if ( exists $ENV{'DRUPAL_TEST_CREDS'} ) {
-  %params = ( split ',', $ENV{'DRUPAL_TEST_CREDS'} );
-} else {
-  say qq{
+ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new( prefix => '' ) },
+  'Correctly fail to instantiate an object with missing dbh parameter and empty string prefix parameter.' );
 
-  No database credentials found in ENV. 
-  Skipping Drupal database tests.
+ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new( prefix => 'foo' ) },
+  'Correctly fail to instantiate an object with missing dbh parameter and invalid prefix parameter.' );
 
-  If you want to run these tests in the future,
-  set the value of DRUPAL_TEST_CREDS in your ENV as
-  documented in the source of this file, $me
+ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new( prefix => 'foo_' ) },
+  'Correctly fail to instantiate an object with missing dbh parameter and valid prefix parameter.' );
 
-  };
+ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => 'foo', prefix => 'bar_' ) },
+  'Correctly fail to instantiate an object with invalid $dbh and valid prefix parameter.' );
 
-  $skip++;
-}
+ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => '$dbh', prefix => '' ) },
+  'Correctly fail to instantiate an object with valid $dbh and empty string prefix parameter.' );
 
-SKIP: {
-  skip "No database credentials supplied", 7, if $skip;
+ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => '$dbh', prefix => 'foo' ) },
+  'Correctly fail to instantiate an object with valid $dbh and invalid prefix parameter "foo".' );
 
-  ###########
+ok( my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh ) ,
+  'Instantiate an object with valid $dbh and no prefix parameter.' );
 
-  ok( my $dbh = $drupal->dbh( %params ),
-    'Get a dbh with the credentials.' );
+ok( my $ME2 = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh, prefix => 'foo_' ),
+  'Instantiate an object with valid $dbh and valid prefix parameter.' );
 
-  ###########
 
-  my $sth = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity', '%' );
-  my @cols = map { $_->[3] } @{ $sth->fetchall_arrayref };
-  my @wanted_cols = qw/ mid
-                        member_id
-                        type
-                        uid
-                        status
-                        created
-                        changed /;
-
-  is_deeply( [ sort @cols ], [ sort @wanted_cols ],
-    'Get correct column names from membership_entity table.');
-
-  ###########
-
-  $sth = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity_term', '%' );
-  @cols = map { $_->[3] } @{ $sth->fetchall_arrayref };
-  @wanted_cols = qw/ id
-                     mid
-                     status
-                     term
-                     modifiers
-                     start
-                     end /;
-
-  is_deeply( [ sort @cols ], [ sort @wanted_cols ],
-    'Get correct column names from membership_entity_terms table.');
-
-  ############
- 
-  $sth = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity_type', '%' );
-  @cols = map { $_->[3] } @{ $sth->fetchall_arrayref };
-  @wanted_cols = qw/ id
-                     type
-                     label
-                     weight
-                     description
-                     data
-                     status
-                     module /;
-
-  is_deeply( [ sort @cols ], [ sort @wanted_cols ],
-    'Get correct column names from membership_entity_type table.');
-
-  ############
-
-  $sth = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity_secondary_member', '%' );
-  @cols = map { $_->[3] } @{ $sth->fetchall_arrayref };
-  @wanted_cols = qw/ mid
-                     uid
-                     weight /;
-
-  is_deeply( [ sort @cols ], [ sort @wanted_cols ],
-    'Get correct column names from membership_entity_secondary_member table.' );
-
-  ############
-
-  # We know there is at least one Membership type in a working installation
-  
-  my $sql = qq|
-    SELECT COUNT(id) AS count
-    FROM membership_entity_type
-  |;
-
-  $sth = $dbh->prepare( $sql );
-
-  ok( $sth->execute(),
-    'Execute a SELECT on the membership_entity_type table.' );
-
-  ok( $sth->fetchrow_hashref->{'count'} > 0,
-    'SELECT COUNT(id) FROM membership_entity_type > 0' );
-
-  # But we can't assume anything else, even that there is a single row in the
-  # membership_entity or membership_entity_term tables, so we can't really 
-  # test anything else ...
-  
-  ##############
-              #
- say "+" x 70;
-
-} # end SKIP block
+say "-" x 78;
 
 __END__
