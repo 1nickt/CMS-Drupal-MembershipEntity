@@ -1,5 +1,8 @@
 #!/usr/bin/env perl
 
+# CMS::Drupal::Modules::MembershipEntity
+# test 01 - object and parameter validation
+
 use strict;
 use warnings;
 use 5.010;
@@ -7,15 +10,12 @@ use 5.010;
 use Test::More tests => 10;
 use DBI;
 
-say '-' x 78;
-
-say "CMS::Drupal::Modules::MembershipEntity ";
-say "test 01 - object and parameter validation.\n";
-
 my $dbh = DBI->connect('DBI:Mock:', '', '', { RaiseError => 1 });
 
-use_ok( 'CMS::Drupal::Modules::MembershipEntity',
-  'use() this module.' );
+BEGIN {
+  use_ok( 'CMS::Drupal::Modules::MembershipEntity',
+    'use() this module.' ) or die;
+}
 
 ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new() },
   'Correctly fail to instantiate an object with no parameters.' );
@@ -38,10 +38,12 @@ ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => '$dbh',
 ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => '$dbh', prefix => 'foo' ) },
   'Correctly fail to instantiate an object with valid $dbh and invalid prefix parameter "foo".' );
 
-ok( my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh ) ,
+my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
+isa_ok( $ME, "CMS::Drupal::Modules::MembershipEntity",
   'Instantiate an object with valid $dbh and no prefix parameter.' );
 
-ok( my $ME2 = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh, prefix => 'foo_' ),
+my $ME2 = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh, prefix => 'foo_' );
+isa_ok( $ME2, "CMS::Drupal::Modules::MembershipEntity",
   'Instantiate an object with valid $dbh and valid prefix parameter.' );
 
 
