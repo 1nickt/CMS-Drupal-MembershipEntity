@@ -17,7 +17,7 @@ has prefix => ( is => 'ro', isa => Maybe[StrMatch[ qr/ \w+_ /x ]] );
 sub fetch_memberships {
   my $self = shift;
   my $prefix = $self->{'prefix'} || '';
- 
+
   my $temp;
   my $memberships;
 
@@ -26,15 +26,18 @@ sub fetch_memberships {
     SELECT mid, created, changed, uid, status, member_id, type
     FROM ${prefix}membership_entity
   |;
+  
   my $sth = $self->{'dbh'}->prepare( $sql );
   $sth->execute;
+  
   my $results = $sth->fetchall_hashref('mid');
+  
   foreach my $mid (keys( %$results )) {
     $temp->{ $mid } = $results->{ $mid };
   }
 
   ## Get the Membership Term info
-  $sql = qq|
+  my $sql2 = qq|
     SELECT t.id AS tid, t.mid AS mid, t.status AS status, t.term AS term,
            t.modifiers AS modifiers, UNIX_TIMESTAMP(t.start) as start,
            UNIX_TIMESTAMP(t.end) as end
@@ -42,14 +45,15 @@ sub fetch_memberships {
     LEFT JOIN ${prefix}membership_entity m ON t.mid = m.mid
     ORDER BY start
   |;
-  $sth = $self->{'dbh'}->prepare( $sql );
+  
+  my $sth2 = $self->{'dbh'}->prepare( $sql2 );
   $sth->execute;
 
   my %term_count; # used to track array position of Terms
 
-  while( my $row = $sth->fetchrow_hashref ) {
+  while( my $row = $sth2->fetchrow_hashref ) {
 
-    ## Shouldn't be but is possible to have a Term with no start or end
+    ## Shouldn't be, but is, possible to have a Term with no start or end
     if ( not defined $row->{'start'} or not defined $row->{'end'} ) {
       carp "MISSING DATE: tid< $row->{'tid'} > " .
            "(uid< $temp->{ $row->{'mid'} }->{'uid'} >) has no start " .
@@ -71,7 +75,7 @@ sub fetch_memberships {
   ## Membership now that we have the data
   foreach my $mid( keys( %$temp )) {
     
-    ## Shouldn't be but is possible to have a Membership with no Term
+    ## Shouldn't be, but is, possible to have a Membership with no Term
     if (not defined $temp->{ $mid }->{'terms'}) {
       carp "MISSING TERM: mid< $mid > (uid< $temp->{ $mid }->{'uid'} >) " .
            "has no Membership Terms. Skipping ...";
