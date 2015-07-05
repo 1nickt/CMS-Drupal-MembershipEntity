@@ -12,10 +12,11 @@ use Carp;
 use feature qw/ say /;
 
 has dbh    => ( is => 'ro', isa => InstanceOf['DBI::db'], required => 1 );
-has prefix => ( is => 'ro', isa => Maybe[Str], required => 1 );
+has prefix => ( is => 'ro', isa => Maybe[StrMatch[ qr/ \w+_ /x ]] );
 
 sub fetch_memberships {
   my $self = shift;
+  my $prefix = shift || '';
  
   my $temp;
   my $memberships;
@@ -23,7 +24,7 @@ sub fetch_memberships {
   ## Get the Membership info
   my $sql = qq|
     SELECT mid, created, changed, uid, status, member_id, type
-    FROM $self->{'prefix'}membership_entity
+    FROM ${prefix}membership_entity
   |;
   my $sth = $self->{'dbh'}->prepare( $sql );
   $sth->execute;
@@ -37,8 +38,8 @@ sub fetch_memberships {
     SELECT t.id AS tid, t.mid AS mid, t.status AS status, t.term AS term,
            t.modifiers AS modifiers, UNIX_TIMESTAMP(t.start) as start,
            UNIX_TIMESTAMP(t.end) as end
-    FROM $self->{'prefix'}membership_entity_term t
-    LEFT JOIN $self->{'prefix'}membership_entity m ON t.mid = m.mid
+    FROM ${prefix}membership_entity_term t
+    LEFT JOIN ${prefix}membership_entity m ON t.mid = m.mid
     ORDER BY start
   |;
   $sth = $self->{'dbh'}->prepare( $sql );
