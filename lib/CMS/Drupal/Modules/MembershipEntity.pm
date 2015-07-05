@@ -16,7 +16,7 @@ has prefix => ( is => 'ro', isa => Maybe[StrMatch[ qr/ \w+_ /x ]] );
 
 sub fetch_memberships {
   my $self = shift;
-  my $prefix = shift || '';
+  my $prefix = $self->{'prefix'} || '';
  
   my $temp;
   my $memberships;
