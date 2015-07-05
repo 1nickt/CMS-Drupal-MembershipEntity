@@ -39,11 +39,11 @@ ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => '$dbh',
   'Correctly fail to instantiate an object with valid $dbh and invalid prefix parameter "foo".' );
 
 my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
-isa_ok( $ME, "CMS::Drupal::Modules::MembershipEntity",
+isa_ok( $ME, 'CMS::Drupal::Modules::MembershipEntity',
   'Instantiate an object with valid $dbh and no prefix parameter.' );
 
 my $ME2 = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh, prefix => 'foo_' );
-isa_ok( $ME2, "CMS::Drupal::Modules::MembershipEntity",
+isa_ok( $ME2, 'CMS::Drupal::Modules::MembershipEntity',
   'Instantiate an object with valid $dbh and valid prefix parameter.' );
 
 
