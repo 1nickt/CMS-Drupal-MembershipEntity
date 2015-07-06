@@ -7,15 +7,16 @@ use strict;
 use warnings;
 use 5.010;
 
-use Test::More tests => 10;
+use Test::More tests => 11;
 use DBI;
 
-my $dbh = DBI->connect('DBI:Mock:', '', '', { RaiseError => 1 });
+my $dbh = DBI->connect('DBI:SQLite:dbname=:memory', '', '', { RaiseError => 1 });
 
 BEGIN {
-  use_ok( 'CMS::Drupal::Modules::MembershipEntity',
-    'use() this module.' ) or die;
+  use_ok( 'CMS::Drupal::Modules::MembershipEntity' ) or die;
 }
+
+can_ok( 'CMS::Drupal::Modules::MembershipEntity', 'new' );
 
 ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new() },
   'Correctly fail to instantiate an object with no parameters.' );
