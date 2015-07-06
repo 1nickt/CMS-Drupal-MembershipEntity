@@ -10,7 +10,7 @@ use 5.010;
 use Test::More tests => 11;
 use DBI;
 
-my $dbh = DBI->connect('DBI:SQLite:dbname=:memory', '', '', { RaiseError => 1 });
+my $dbh = DBI->connect('DBI:SQLite:dbname=:memory:', '', '', { RaiseError => 1 });
 
 BEGIN {
   use_ok( 'CMS::Drupal::Modules::MembershipEntity' ) or die;
