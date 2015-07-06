@@ -56,19 +56,15 @@ use 5.010;
 use Cwd qw/ abs_path /;
 my $me = abs_path($0);
 
-use Test::More tests => 10;
+use Test::More tests => 12;
 
 # CMS::Drupal::Modules::MembershipEntity
 # test 02 - database readiness
 
 BEGIN {
-  use_ok( 'CMS::Drupal',
-    'use() CMS::Drupal' ) or die;
-
-  use_ok( 'CMS::Drupal::Modules::MembershipEntity',
-    'use() CMS::Drupal::Modules::MembershipEntity' ) or die;
+  use_ok( 'CMS::Drupal' ) or die;
+  use_ok( 'CMS::Drupal::Modules::MembershipEntity' ) or die;
 }
-
 
 my %params;
 my $skip = 0;
@@ -93,18 +89,19 @@ if ( exists $ENV{'DRUPAL_TEST_CREDS'} ) {
 
 
 SKIP: {
-  skip "No database credentials supplied", 8, if $skip;
+  skip "No database credentials supplied", 10, if $skip;
 
   ###########
 
+  can_ok( 'CMS::Drupal', 'new' );
   my $drupal = CMS::Drupal->new;
   isa_ok( $drupal, 'CMS::Drupal');
 
   ###########
 
+  can_ok( 'CMS::Drupal', 'dbh' );
   my $dbh = $drupal->dbh( %params );
-  isa_ok( $dbh, 'DBI::db',
-    'Get a dbh from CMS::Drupal::dbh() with the credentials.' );
+  isa_ok( $dbh, 'DBI::db');
 
   ###########
 
