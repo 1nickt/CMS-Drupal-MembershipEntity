@@ -12,8 +12,8 @@ CREATE TABLE "membership_entity_term" (
   "id" integer primary key autoincrement,
   "mid" int(10) NOT NULL,
   "status" int(11) NOT NULL DEFAULT '1',
-  "term" varchar(32) NOT NULL DEFAULT '',
-  "modifiers" longtext,
+  "term" varchar(32) NOT NULL DEFAULT '1 year',
+  "modifiers" longtext DEFAULT 'a:0:{}',
   "start" datetime NOT NULL,
   "end" datetime DEFAULT NULL
 );
