@@ -5,6 +5,7 @@ package CMS::Drupal::Modules::MembershipEntity;
 
 use Moo;
 use Types::Standard qw/ :all /;
+use Time::Local;
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 use CMS::Drupal::Modules::MembershipEntity::Term;
 use Data::Dumper;
@@ -40,18 +41,13 @@ sub fetch_memberships {
 
   ## Get the Membership Term info
   my $sql2 = qq|
-    SELECT t.id AS tid, t.mid AS mid, t.status AS status, t.term AS term,
-    t.modifiers AS modifiers, t.start as start, t.end as end
-    FROM ${prefix}membership_entity_term t
-    LEFT JOIN ${prefix}membership_entity m ON t.mid = m.mid
+    SELECT id as tid, mid, status, term, modifiers, start, end
+    FROM ${prefix}membership_entity_term
     ORDER BY start
   |;
   
   my $sth2 = $self->{'dbh'}->prepare( $sql2 );
-  $sth->execute;
-
-  my $foo = $sth2->fetchall_hashref('tid');
-  croak Dumper $foo;
+  $sth2->execute;
 
   my %term_count; # used to track array position of Terms
 
@@ -65,10 +61,17 @@ sub fetch_memberships {
       next;
     }
 
+    ## convert the start and end to unixtime
+    for (qw/ start end /) {
+      my @datetime = reverse (split /[-| |:]/, $row->{ $_ });
+      $datetime[4]--;
+      $row->{ $_ } = timelocal( @datetime );
+    } 
+
     ## Track which of the Membership's Terms this is
     $term_count{ $row->{'mid'} }++;
     $row->{'array_position'} = $term_count{ $row->{'mid'} };
-
+    
     ## Instantiate a MembershipEntity::Term object for each
     ## Term now that we have the data
     my $term = CMS::Drupal::Modules::MembershipEntity::Term->new( $row );
