@@ -78,9 +78,6 @@ sub fetch_memberships {
     $temp->{ $row->{'mid'} }->{ 'terms' }->{ $row->{'tid'} } = $term;
   }
 
-croak Dumper $temp;
-
-
   ## Instantiate a MembershipEntity::Membership object for each
   ## Membership now that we have the data
   foreach my $mid( keys( %$temp )) {
