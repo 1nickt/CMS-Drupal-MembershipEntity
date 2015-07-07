@@ -38,8 +38,8 @@ is( $ME->fetch_memberships, undef, 'No error but no results for fetch_membership
 #########
 
 # first we have to have a default type
-# add type = 'at'
-my %at = (
+# add type = 'ay'
+my %ay = (
   id          => '1', # we're going to check the insert_row_id
   type        => 'membership',
   label       => 'Membership',
@@ -50,73 +50,81 @@ my %at = (
   module      => 'foo'
 );
 
-my $add_type = qq/
-  INSERT INTO membership_entity_type ( type, label, weight, description, data, status, module )
+my $ay = qq/
+  INSERT INTO membership_entity_type (type, label, weight, description, data, status, module)
   VALUES (?, ?, ?, ?, ?, ?, ?)
 /;
 
-my $add_type_rv = $dbh->do( $add_type, {}, $at{'type'}, $at{'label'}, $at{'weight'}, $at{'description'}, $at{'data'}, $at{'status'}, $at{'module'} );
+my $ay_rv = $dbh->do( $ay, {}, $ay{'type'}, $ay{'label'}, $ay{'weight'}, $ay{'description'}, $ay{'data'}, $ay{'status'}, $ay{'module'} );
+cmp_ok( $ay_rv, '>', 0, 'Added a default type with no DB errors' );
 
-cmp_ok( $add_type_rv, '>', 0, 'Added a default type with no DB errors' );
+my $ay_last_insert_id = $dbh->last_insert_id( undef, undef, 'membership_entity_type', 'id' );
+cmp_ok( $ay_last_insert_id, '>', 0, 'last_insert_id > 0' );
 
 ## now select it back and compare with %at
-my $fetch_type = qq/
+my $fetch_ay = qq/
   SELECT id, type, label, weight, description, data, status, module
   FROM membership_entity_type
   LIMIT 1
   /;
 
-my $at_rows = $dbh->selectall_hashref( $fetch_type, 'id' );
-
-cmp_ok( scalar keys $at_rows, '==', 1, 'Just one row in membership_entity_type' );
-
-is_deeply( $at_rows->{1}, \%at, 'Got back the same data we inserted in membership_entity_type' );
+my $ay_rows = $dbh->selectall_hashref( $fetch_ay, 'id' );
+cmp_ok( scalar keys $ay_rows, '==', 1, 'Just one row in membership_entity_type' );
+is_deeply( $ay_rows->{ $ay_last_insert_id }, \%ay, 'Got back the same data we inserted in membership_entity_type' );
 
 ##########
 
 # prepare for adding memberships
 # and their terms
-__END__
-# add membership = 'am'
+
+# add membership = 'am'; add term = 'at'
+
 my %am = (
-  mid       => 'mid',
-  member_id => 'member_id',
-  type      => 
-  uid
-  status
-  created
-  changed
+  mid       => 1,
+  member_id => 1,
+  type      => 'membership',
+  uid       => 1,
+  status    => 1,
+  created   => 1,
+  changed   => 1
+);
 
+my $am = qq/
+  INSERT INTO membership_entity (created, changed)
+  VALUES (?, ?)
+  /;
 
-
-
-my $add_mem = $dbh->prepare( qq/
-  INSERT INTO membership_entity
-    (created)
-  VALUES ( ? )
-  / );
-
-my $add_mem2 = $dbh->prepare( qq/
+my $am2 = qq/
   UPDATE membership_entity
-  SET member_id = ?, uid = ?, changed = ?
+  SET member_id = mid, uid = mid
   WHERE mid = ?
-  / );
+  /;
+
+my $fetch_am = qq/
+  SELECT mid, member_id, type, uid, status, created, changed
+  FROM membership_entity
+  WHERE mid = ?
+  /;
 
 sub add_membership {
-  my $args = {@_};
-  my $add_mem_rv = $dbh->do( $add_mem, undef, '11234567890' );
+  my $now = time; $am{'created'} = $am{'changed'} = $now;
 
-  cmp_ok( $add_mem_rv, '>', 0, 'Added a Membership ...' );  
+  my $am_rv = $dbh->do( $am, {}, $now, $now );
+  cmp_ok( $am_rv, '>', 0, 'Added a Membership (part 1/2) with no DB errors' );
+  
+  my $am_last_insert_id = $dbh->last_insert_id( undef, undef, 'membership_entity', 'mid' );
+  cmp_ok( $am_last_insert_id, '>', 0, 'last_insert_id > 0' );
+  $am{'mid'} = $am{'member_id'} = $am{'uid'} = $am_last_insert_id;
 
+  my $am2_rv = $dbh->do( $am2, {}, $am_last_insert_id );
+  cmp_ok( $am2_rv, '>', 0, 'Added a Membership (part 2/2) with no DB errors' );
+
+  my $am_rows = $dbh->selectall_hashref( $fetch_am, 'mid', {}, $am_last_insert_id );
+  cmp_ok( scalar keys $am_rows, '==', 1, 'Just one row in membership_entity_type' );
+  is_deeply( $am_rows->{ $am_last_insert_id }, \%am, 'Got back the same data we inserted in membership_entity' );
 }
 
-add_membership( created => '2015-07-06' );
-
-
-
-#my $add_mem = qq/
-#  INSERT INTO 
-#$dbh_do( $insert );
+add_membership();
 
 
 
