@@ -8,6 +8,7 @@ use Test::More;
 use DBI;
 use FindBin;
 use File::Slurp::Tiny 'read_file';
+use POSIX qw/ strftime /;
 
 use Data::Dumper;
 use Carp qw/ croak confess /;
@@ -77,7 +78,14 @@ is_deeply( $ay_rows->{ $ay_last_insert_id }, \%ay, 'Got back the same data we in
 # prepare for adding memberships
 # and their terms
 
-# add membership = 'am'; add term = 'at'
+my $now = time;
+
+sub datetime { 
+  my $time = shift;
+  return strftime "%F %T", localtime($time);
+}
+
+# add membership = 'am'; i
 
 my %am = (
   mid       => 1,
@@ -85,13 +93,13 @@ my %am = (
   type      => 'membership',
   uid       => 1,
   status    => 1,
-  created   => 1,
-  changed   => 1
+  created   => $now,
+  changed   => $now
 );
 
 my $am = qq/
-  INSERT INTO membership_entity (created, changed)
-  VALUES (?, ?)
+  INSERT INTO membership_entity (status, created, changed)
+  VALUES (?, ?, ?)
   /;
 
 my $am2 = qq/
@@ -107,9 +115,17 @@ my $fetch_am = qq/
   /;
 
 sub add_membership {
-  my $now = time; $am{'created'} = $am{'changed'} = $now;
+ 
+  my $args = { @_ };
+  croak unless defined $args->{'status'};
+  $am{'status'} = $args->{'status'};
 
-  my $am_rv = $dbh->do( $am, {}, $now, $now );
+  # Add the Membership. It takes two steps because we
+  # populate several fields from the returned last_insert_id
+
+  $am{'created'} = $am{'changed'} = $now;
+
+  my $am_rv = $dbh->do( $am, {}, $args->{'status'}, $now, $now );
   cmp_ok( $am_rv, '>', 0, 'Added a Membership (part 1/2) with no DB errors' );
   
   my $am_last_insert_id = $dbh->last_insert_id( undef, undef, 'membership_entity', 'mid' );
@@ -120,12 +136,72 @@ sub add_membership {
   cmp_ok( $am2_rv, '>', 0, 'Added a Membership (part 2/2) with no DB errors' );
 
   my $am_rows = $dbh->selectall_hashref( $fetch_am, 'mid', {}, $am_last_insert_id );
-  cmp_ok( scalar keys $am_rows, '==', 1, 'Just one row in membership_entity_type' );
+  cmp_ok( scalar keys $am_rows, '==', 1, 'Just one row in membership_entity' );
   is_deeply( $am_rows->{ $am_last_insert_id }, \%am, 'Got back the same data we inserted in membership_entity' );
+
+  add_term (
+    mid       => $am_rows->{ $am_last_insert_id }->{'mid'},
+    status    => 1,
+    term      => '1 year',
+    modifiers => 'a:0:{}',
+    start     => datetime( $now ),
+    end       => datetime( $now + (365 * 24 * 60 * 60) )
+  );
+
+  say Dumper $am_rows;
 }
 
-add_membership();
+my $at = qq/
+  INSERT INTO membership_entity_term (mid, status, term, modifiers, start, end)
+  VALUES (?, ?, ?, ?, ?, ?)
+  /;
 
+my $fetch_at = qq/ 
+  SELECT id, mid, status, term, modifiers, start, end
+  FROM membership_entity_term
+  WHERE id = ?
+  /;
+
+my %at = ( 
+  id        => 1,
+  mid       => 1,
+  status    => 1,
+  term      => '1 month',
+  modifiers => 'a:0:{}',
+  start     => datetime( $now ),
+  end       => datetime( $now + (31 * 24 * 60 * 60)),
+);
+
+sub add_term {
+ 
+  my $args = { @_ };
+
+  croak "Missing param 'mid'!" unless defined $args->{'mid'};
+  croak "Missing param 'status'!" unless defined $args->{'status'};
+ 
+  $at{'mid'}    = $args->{'mid'};
+  $at{'status'} = $args->{'status'};
+  $at{'term'}   = $args->{'term'};
+  $at{'start'}  = $args->{'start'};
+  $at{'end'}    = $args->{'end'};
+
+  for (1..2) {
+  my $at_rv = $dbh->do( $at, {}, $args->{'mid'}, $args->{'status'}, $args->{'term'}, $args->{'modifiers'}, $args->{'start'}, $args->{'end'} );
+  cmp_ok( $at_rv, '>', 0, 'Added a Term with no DB errors' );
+  
+  my $at_last_insert_id = $dbh->last_insert_id( undef, undef, 'membership_entity_term', 'id' );
+  cmp_ok( $at_last_insert_id, '>', 0, 'last_insert_id > 0' );
+  $at{'id'} = $at_last_insert_id;
+
+  my $at_rows = $dbh->selectall_hashref( $fetch_at, 'id', {}, $at_last_insert_id );
+  cmp_ok( scalar keys $at_rows, '==', 1, 'Just one row in membership_entity_term' );
+  is_deeply( $at_rows->{ $at_last_insert_id }, \%at, 'Got back the same data we inserted in membership_entity_term' );
+ }
+}
+
+for (1..3) {
+  add_membership( status => $_ );
+}
 
 
 say "+" x 78;
