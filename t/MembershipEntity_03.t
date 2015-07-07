@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use 5.010;
 
-use Test::More;
+use Test::More tests => 4;
 use Test::Group;
 use DBI;
 use FindBin;
@@ -29,10 +29,6 @@ BEGIN {
 
       for (qw/ test_db.sql test_types.dat test_memberships.dat test_terms.dat /) { 
         ok( -e "$FindBin::Bin/$_", "(we have $_)" );
-        #ok( -e "$FindBin::Bin/test_db.sql", "we have $_" );
-        #ok( -e "$FindBin::Bin/test_types.dat", 'we have $_' );
-        #ok( -e "$FindBin::Bin/test_memberships.dat", 'we have $_' );
-        #ok( -e "$FindBin::Bin/test_terms.dat", 'we have $_' );
       }
     };
   };
@@ -125,6 +121,8 @@ subtest "Create a MembershipEntity object and check its methods.\n" => sub {
 };
 
 subtest "Functionality tests.\n", => sub {
+
+  plan tests => 1;
 
   ## Make a structure from the data files and compare to what the 
   ## module's function returns
