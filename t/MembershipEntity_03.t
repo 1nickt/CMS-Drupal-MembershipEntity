@@ -51,11 +51,11 @@ my %at = (
 );
 
 my $add_type = qq/
-  INSERT INTO membership_entity_type (id, type, label, weight, description, data, status, module)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO membership_entity_type ( type, label, weight, description, data, status, module )
+  VALUES (?, ?, ?, ?, ?, ?, ?)
 /;
 
-my $add_type_rv = $dbh->do( $add_type, undef, $at{'id'}, $at{'type'}, $at{'label'}, $at{'weight'}, $at{'description'}, $at{'data'}, $at{'status'}, $at{'module'} );
+my $add_type_rv = $dbh->do( $add_type, {}, $at{'type'}, $at{'label'}, $at{'weight'}, $at{'description'}, $at{'data'}, $at{'status'}, $at{'module'} );
 
 cmp_ok( $add_type_rv, '>', 0, 'Added a default type with no DB errors' );
 
@@ -72,13 +72,23 @@ cmp_ok( scalar keys $at_rows, '==', 1, 'Just one row in membership_entity_type' 
 
 is_deeply( $at_rows->{1}, \%at, 'Got back the same data we inserted in membership_entity_type' );
 
-#croak Dumper $at_rows;
-
-__END__
-
 ##########
 
 # prepare for adding memberships
+# and their terms
+__END__
+# add membership = 'am'
+my %am = (
+  mid       => 'mid',
+  member_id => 'member_id',
+  type      => 
+  uid
+  status
+  created
+  changed
+
+
+
 
 my $add_mem = $dbh->prepare( qq/
   INSERT INTO membership_entity
