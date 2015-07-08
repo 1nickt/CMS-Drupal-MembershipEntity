@@ -139,3 +139,97 @@ sub build_test_data {
 
 1; # End package
 
+=pod
+
+=head1 SYNOPSIS
+
+ use Test::More;
+ use CMS::Drupal;
+ use CMS::Drupal::Modules::MembershipEntity::Test qw/ build_test_db build_test_data/;
+
+ my $drupal = CMS::Drupal->new;
+
+ my $dbh = build_test_db( $drupal );
+
+ my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
+
+ my $hashref = $ME->fetch_memberships;
+ my $cmp_data = build_test_data;
+
+ is_deeply($hashref, $cmp_data, 'Data matches'); 
+
+=head1 DESCRIPTION
+
+Use this module when testing the CMS::Drupal::Modules::MembershipEntity modules.
+
+=head2 Methods
+
+=head3 build_test_db
+
+This method returns a database handle ($dbh) that is connected to an in-memory SQLite database.
+The database is built by this method using data files that must be contained in the same directory that
+the calling script lives in.
+
+The method takes one argument, which must be a $drupal object. This is because it calls $drupal->dbh()
+to generate its database handle, which, because we are using SQLite, contains the database inside the 
+very handle itself.
+
+The files are:
+
+=over 4
+
+=item test_db.sql
+
+=item test_types.dat
+
+=item test_memberships.dat
+
+=item test_terms.dat
+
+=back
+
+=head3 build_test_data
+
+This method returns a data structure containing the Memberships as they would be returned by
+CMS::Drupal::Modules::MembershipEntity::fetch_memberships(). It creates the data structure
+by parsing the same files that were used to build in test database.
+
+The data structure is a hashref of hashrefs (Membership objects, indexed by mid, containing
+among their attributes an array of hashrefs (Membership Term objects) ...
+
+ '4086' => bless( {
+                   'created' => '1354086000',
+                   'mid' => '4086',
+                   'changed' => '1400604379',
+                   'uid' => '12305',
+                   'status' => '1',
+                   'member_id' => '01252',
+                   'terms' => {
+                               '4088' => bless( {
+                                                 'mid' => '4086',
+                                                 'array_position' => 2,
+                                                 'status' => '1',
+                                                 'modifiers' => 'a:0:{}',
+                                                 'end' => 1448611200,
+                                                 'start' => 1354089600,
+                                                 'term' => 'import',
+                                                 'tid' => '4088'
+                                                }, 'CMS::Drupal::Modules::MembershipEntity::Term' ),
+                               '3920' => bless( {
+                                                 'mid' => '4086',
+                                                 'array_position' => 1,
+                                                 'status' => '0',
+                                                 'modifiers' => 'a:0:{}',
+                                                 'end' => 1403247600,
+                                                 'start' => 1308639600,
+                                                 'term' => 'import',
+                                                 'tid' => '3920'
+                                                }, 'CMS::Drupal::Modules::MembershipEntity::Term' )
+                              },
+                   'type' => 'membership'
+                  }, 'CMS::Drupal::Modules::MembershipEntity::Membership' ),
+ 
+
+=cut
+
+
