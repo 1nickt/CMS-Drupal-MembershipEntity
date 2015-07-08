@@ -2,7 +2,7 @@
 
 ##############################################################################
 #
-# This is t/MembershipEntity02.t It tests the 
+# This is t/002_valid_drupal.t It tests the 
 # CMS::Drupal::Modules::MembershipEntity module against a real Drupal
 # database. It looks in your environment to see if you have provided
 # connection information.
@@ -40,7 +40,7 @@
 # command prompt:
 #
 # $ DRUPAL_TEST_CREDS=database,foo,driver,SQLite
-# $ perl ./MembershipEntity_02.t
+# $ perl t/002_valid_drupal.t
 #
 # If you report a bug or ask for support for this module, the first thing I 
 # will ask for is the output from these tests, so make sure and do this, 'k?

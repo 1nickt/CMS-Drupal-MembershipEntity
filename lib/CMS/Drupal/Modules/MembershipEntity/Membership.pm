@@ -19,6 +19,22 @@ has member_id => ( is => 'ro', isa => Str, required => 1 );
 has type      => ( is => 'ro', isa => Str, required => 1 );
 has terms     => ( is => 'ro', isa => HashRef, required => 1 );
 
+sub is_active {
+  my $self = shift;
+  $self->{'_is_active'} = $self->{'status'} eq '1' ? 1 : 0;
+  return $self->{'_is_active'};
+}
+
+sub has_renewal {
+  my $self = shift;
+  $self->{'_has_renewal'} = 0;
+  foreach my $term ( values $self->{'terms'} ) {
+    $self->{'_has_renewal'}++ if $term->is_future;
+  }
+  return $self->{'_has_renewal'};
+}
+
+
 1; ## return true to end package MembershipEntity::Membership
 
 =pod
