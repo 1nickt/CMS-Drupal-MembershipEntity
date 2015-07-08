@@ -4,4 +4,5 @@
 !Changes
 !dist.ini
 !.gitignore
+/t/data/.test_db.sqlite
 

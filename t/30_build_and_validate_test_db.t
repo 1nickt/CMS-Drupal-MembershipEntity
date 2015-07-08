@@ -15,7 +15,7 @@ use Data::Dumper;
 use Carp qw/ croak confess /;
 
 # CMS::Drupal::Modules::MembershipEntity
-# test 03 - Test functions on a mock DB";
+# test 03 - Builds and validates a test DB
 
 BEGIN {
   subtest "We have all our parts.\n" => sub {
@@ -23,19 +23,19 @@ BEGIN {
     
     use_ok( 'CMS::Drupal' ) or die;
     use_ok( 'CMS::Drupal::Modules::MembershipEntity' ) or die;
-    use_ok( 'CMS::Drupal::Modules::MembershipEntity::Test', qw( build_test_db build_test_data ) );
+    use_ok( 'CMS::Drupal::Modules::MembershipEntity::Test', qw( build_and_validate_test_db build_test_data ) );
     subtest 'All the data files exist.' => sub {
       plan tests => 4;
 
       for (qw/ test_db.sql test_types.dat test_memberships.dat test_terms.dat /) { 
-        ok( -e "$FindBin::Bin/$_", "(we have $_)" );
+        ok( -e "$FindBin::Bin/data/$_", "(we have $_)" );
       }
     };
   };
 }
 
 my $drupal = CMS::Drupal->new;
-my $dbh    = build_test_db( $drupal );;
+my $dbh    = build_and_validate_test_db( $drupal );
 
 ##########
 
@@ -50,7 +50,7 @@ subtest "Create a MembershipEntity object and check its methods.\n" => sub {
   can_ok( 'CMS::Drupal::Modules::MembershipEntity', 'fetch_memberships' );
 };
 
-subtest "Functionality tests.\n", => sub {
+subtest "Validated data integrity.\n", => sub {
   plan tests => 1;
 
   ## Make a structure from the data files and compare to what the 

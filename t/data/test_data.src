@@ -9,4 +9,12 @@ echo 'select * from membership_entity_term where id % 56 = 0' | mysql --skip-col
 
 echo 'select * from membership_entity where mid in (select mid from membership_entity_term where id % 56 = 0)' | mysql --skip-column-names -D cat36ia_d7prod > ./test_memberships.dat
 
+## Added to test future renewals ....
+#
+mid    tid
+4205   4207
+4205   4466
+3530   4341
+3530   3532
+
 

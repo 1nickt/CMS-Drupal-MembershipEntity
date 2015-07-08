@@ -3,8 +3,11 @@ package CMS::Drupal::Modules::MembershipEntity::Test;
 
 # ABSTRACT: Exports some helper routines for testing
 
+use 5.010;
 use base "Exporter::Tiny";
-our @EXPORT = qw/ build_test_db build_test_data /;
+our @EXPORT = qw/ build_test_db
+                  build_and_validate_test_db
+                  build_test_data /;
 
 use Data::Dumper;
 use Carp qw/ croak confess /;
@@ -14,7 +17,7 @@ use File::Slurp::Tiny qw/ read_file read_lines /;
 use FindBin;
 use Time::Local;
 
-sub build_test_db {
+sub build_and_validate_test_db {
 
   ## Reads the test data from .dat files and
   ## builds an in-memory SQLite database
@@ -35,7 +38,7 @@ sub build_test_db {
 
     subtest 'Created the test database tables.' => sub {
       plan tests => 4;
-      for (split( /\n{2,}/, read_file("$FindBin::Bin/test_db.sql") )) {
+      for (split( /\n{2,}/, read_file("$FindBin::Bin/data/test_db.sql") )) {
         my $rv = $dbh->do($_);
         isnt( $rv, undef, 'Added a table to the test database' );
       }   
@@ -50,7 +53,7 @@ sub build_test_db {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     /;
   
-    my @fields = split(',', read_file("$FindBin::Bin/test_types.dat")) or croak; # This file must have only ONE line
+    my @fields = split(',', read_file("$FindBin::Bin/data/test_types.dat")) or croak; # This file must have only ONE line
   
     my $add_type_rv = $dbh->do( $add_type, {}, @fields, undef );
     cmp_ok( $add_type_rv, '>', 0, 'Populate the membership_entity_type table with a default type' );
@@ -62,7 +65,7 @@ sub build_test_db {
       /;
   
     test 'Populate the membership_entity table with test data' => sub {
-      for ( read_lines("$FindBin::Bin/test_memberships.dat",  chomp => 1 ) ) {
+      for ( read_lines("$FindBin::Bin/data/test_memberships.dat",  chomp => 1 ) ) {
         my @fields = split(',');
         my $add_mem_rv = $dbh->do( $add_mem, {}, @fields );
         cmp_ok( $add_mem_rv, '>', 0, "Added a Membership for mid $fields[0]" );
@@ -76,7 +79,7 @@ sub build_test_db {
       /;
   
     test 'Populate the membership_entity_term table with test data' => sub {
-      for ( read_lines("$FindBin::Bin/test_terms.dat",  chomp => 1 ) ) {
+      for ( read_lines("$FindBin::Bin/data/test_terms.dat",  chomp => 1 ) ) {
         my @fields = split(',');
         my $add_term_rv = $dbh->do( $add_term, {}, @fields );
         cmp_ok( $add_term_rv, '>', 0, "Added a Term for $fields[0]" );
@@ -84,17 +87,78 @@ sub build_test_db {
     };
   }; # done building the test DB
 
+  $dbh->sqlite_backup_to_file("$FindBin::Bin/data/.test_db.sqlite");
+
   return $dbh;
 }
 
+sub build_test_db {
+
+  ## No testing here!
+
+  ## Reads the test data from .dat files and
+  ## builds an in-memory SQLite database
+
+
+  my $drupal = shift;
+  my $dbh = $drupal->dbh( database => ':memory:',
+                          driver   => 'SQLite' );
+
+  for (split( /\n{2,}/, read_file("$FindBin::Bin/data/test_db.sql") )) {
+    my $rv = $dbh->do($_);
+  }
+
+  # First we have to have a default type
+  my $add_type = qq/
+    INSERT INTO membership_entity_type (type, label, weight, description, data, status, module)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  /;
+
+  my @fields = split(',', read_file("$FindBin::Bin/data/test_types.dat")) or croak; # This file must have only ONE line
+
+  my $add_type_rv = $dbh->do( $add_type, {}, @fields, undef );
+
+  ## Now add Memberships from the data file
+  my $add_mem = qq/
+    INSERT INTO membership_entity (mid, member_id, type, uid, status, created, changed)
+    VALUES ( ?, ?, ?, ?, ?, ?, ?)
+    /;
+
+  for ( read_lines("$FindBin::Bin/data/test_memberships.dat",  chomp => 1 ) ) {
+    my @fields = split(',');
+    my $add_mem_rv = $dbh->do( $add_mem, {}, @fields );
+  }
+
+  ## Now add Membership Terms from the data file
+  my $add_term = qq/
+    INSERT INTO membership_entity_term(id, mid, status, term, modifiers, start, end )
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    /;
+
+  for ( read_lines("$FindBin::Bin/data/test_terms.dat",  chomp => 1 ) ) {
+    my @fields = split(',');
+    my $add_term_rv = $dbh->do( $add_term, {}, @fields );
+  }
+
+  return $dbh;
+} 
+
+############################
 
 sub build_test_data {
 
+  my $mids = shift;
+  my %include;
+  for( @$mids ) {
+    $include{ $_ }++;
+  }
+ 
   my %membs;
   my %terms;
 
-  for ( read_lines("$FindBin::Bin/test_memberships.dat", chomp => 1) ) {
+  for ( read_lines("$FindBin::Bin/data/test_memberships.dat", chomp => 1) ) {
     my @fields = split(',');
+    if (scalar @$mids > 0) { next unless exists $include{ $fields[0] }; }
     $membs{ $fields[0] } = { mid       => $fields[0],
                              member_id => $fields[1],
                              type      => $fields[2],
@@ -106,8 +170,9 @@ sub build_test_data {
 
   my %term_count;
 
-  for ( read_lines("$FindBin::Bin/test_terms.dat", chomp => 1) ) {
+  for ( read_lines("$FindBin::Bin/data/test_terms.dat", chomp => 1) ) {
     my @fields = split(',');
+    if (scalar @$mids > 0) { next unless exists $include{ $fields[1] } };
     $term_count{ $fields[1] }++;
     for (5..6) {
       my @datetime = reverse (split /[-| |:]/, $fields[ $_ ]);
@@ -156,6 +221,11 @@ sub build_test_data {
  my $hashref = $ME->fetch_memberships;
  my $cmp_data = build_test_data;
 
+ # or:
+ 
+ my $hashref = $ME->fetch_memberships([ 1234, 5678 ]);
+ my $cmp_data = build_test_data([ 1234, 5678 ]);
+
  is_deeply($hashref, $cmp_data, 'Data matches'); 
 
 =head1 DESCRIPTION
@@ -188,11 +258,21 @@ The files are:
 
 =back
 
+Note that this method uses Test::More and Test::Group itself to report success/failures in building
+the test database. So in your scipt that calls this method you should add one additional test to
+your plan.
+
 =head3 build_test_data
 
 This method returns a data structure containing the Memberships as they would be returned by
 CMS::Drupal::Modules::MembershipEntity::fetch_memberships(). It creates the data structure
 by parsing the same files that were used to build in test database.
+
+The method takes an optional single argument, which is an arrayref containing a list of B<mid>s.
+Only the Memberships associated with the B<mid>s provided will; be included in the data
+returned.
+
+ $cmp_data = build_test_data( [ 1234, 5678 ] );
 
 The data structure is a hashref of hashrefs (Membership objects, indexed by mid, containing
 among their attributes an array of hashrefs (Membership Term objects) ...
