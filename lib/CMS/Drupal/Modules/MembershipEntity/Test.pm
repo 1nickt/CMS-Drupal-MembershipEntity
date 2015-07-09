@@ -140,6 +140,8 @@ sub build_test_db {
     my $add_term_rv = $dbh->do( $add_term, {}, @fields );
   }
 
+  $dbh->sqlite_backup_to_file( "$FindBin::Bin/data/.DB.sqlite" );
+
   return $dbh;
 } 
 
@@ -205,6 +207,10 @@ sub build_test_data {
 1; # End package
 
 =pod
+
+=head1 NAME
+
+CMS::Drupal::Modules::MembershipEntity::Test
 
 =head1 SYNOPSIS
 
