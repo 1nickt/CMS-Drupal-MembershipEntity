@@ -53,7 +53,8 @@ subtest 'Test a Membership object', sub {
   };
 
   subtest 'Validate methods', sub {
-    
+    plan tests => 6;
+
     is( $mem->is_active, 1, 'is_active when status = 1' );
     
     for (0, 2, 3) {
@@ -61,15 +62,45 @@ subtest 'Test a Membership object', sub {
       isnt( $mem->is_active, 1, 'not is_active when status = '. $_ );
     }
 
-    # depends on Term object; will have to test that first.
-    # is( $mem->has_renewal, 1, 'has_renewal' );
+    $mem->{'terms'} = {
+                       '4088' => bless( {
+                                         'array_position' => 2,
+                                         'status' => 1,
+                                         'tid' => 4088,
+                                         'term' => 'import',
+                                         'end' => 1448611200,
+                                         'mid' => 4086,
+                                         'modifiers' => 'a:0:{}',
+                                         'start' => 1436489565
+                                       }, 'CMS::Drupal::Modules::MembershipEntity::Term' ),
+                      '3920' => bless( {
+                                         'array_position' => 1,
+                                         'status' => 0,
+                                         'tid' => 3920,
+                                         'term' => 'import',
+                                         'end' => 1403247600,
+                                         'mid' => 4086,
+                                         'modifiers' => 'a:0:{}',
+                                         'start' => 1308639600
+                                       }, 'CMS::Drupal::Modules::MembershipEntity::Term' )
+                    };
+    is( $mem->has_renewal, 1, 'has_renewal' );
 
-    done_testing;
+    $mem->{terms} = { 
+                     '3920' => bless( {
+                                       'array_position' => 1,
+                                       'status' => 0,
+                                       'tid' => 3920,
+                                       'term' => 'import',
+                                       'end' => 1403247600,
+                                       'mid' => 4086,
+                                       'modifiers' => 'a:0:{}',
+                                       'start' => 1308639600
+                                     }, 'CMS::Drupal::Modules::MembershipEntity::Term' )
+                       };  
+    isnt( $mem->has_renewal, 1, '! has_renewal' );
+
   };
-
-
-done_testing;
-
 };
 
 say '  ---  ' x 7;
