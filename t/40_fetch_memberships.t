@@ -6,7 +6,9 @@ use warnings;
 use 5.010;
 use open ':std', ':encoding(utf8)';
 use Test::More tests => 1;
+use Test::Group;
 
+use Data::Dumper;
 use CMS::Drupal;
 use CMS::Drupal::Modules::MembershipEntity;
 use CMS::Drupal::Modules::MembershipEntity::Test qw/ build_test_db build_test_data/;
@@ -18,7 +20,9 @@ my $ME     = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
 subtest 'Feed various things to fetch_memberships()', sub {
   plan tests => 2;
   subtest 'Various arrays of valid mids', sub {
+    plan tests => 5;
     for (
+          [],
           [3694],
           [3694, 2966],
           [3694, 2966, 42],
@@ -27,25 +31,27 @@ subtest 'Feed various things to fetch_memberships()', sub {
       my $array = $_;
       my $hashref = $ME->fetch_memberships( $array );
       my $cmp_data = build_test_data( $array );
-    
-      is( (scalar keys $hashref), (scalar keys $cmp_data),
-        'One hashref element for each valid mid passed in' );
-    
-      is_deeply($hashref, $cmp_data, "Data matches for @$array");
+  
+      test 'Data comparison with '. @$array .' mids', sub {
+        is( (scalar keys $hashref), (scalar keys $cmp_data),
+          'One item returned for each mid passed in' );
+      
+        is_deeply($hashref, $cmp_data,
+          'Data matches' );
+      };
     }
   };
 
   subtest 'Various arrays with invalid mids', sub {
+    plan tests => 4;
     for (
-          [],
           [3694, 'foo'],
           [3694, $ME],
           [3694, chr(0x263a)],
           [3694, sub { print "Hello, world\n" }],
         ) {
       my $array = $_;
-      ok( ! eval{ my $hashref = $ME->fetch_memberships( $array ) },
-        "Correctly died with bad mid ('". $array ? $array->[1] : '' ."') in call to fetch_memberships()" );
+      ok( ! eval{ my $hashref = $ME->fetch_memberships( $array ) }, $array->[1] );
     }
   };
 };

@@ -24,8 +24,11 @@ sub fetch_memberships {
 
   my $mids = shift;
   my $WHERE = ' ';
+ 
   if ( $mids ) {
-    confess "FATAL: Empty list of mids." if scalar @{ $mids } < 1;
+    if ( scalar @{ $mids } < 1 ) {
+      carp "Empty arrayref passed to fetch_memberships() ... returning all Memberships";
+    }
 
     for (@$mids) {
       # Let's be real strict about what we try to pass in to the DBMS
