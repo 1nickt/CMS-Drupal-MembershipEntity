@@ -97,3 +97,19 @@ sub percentage_expired_memberships {
 
 
 1; ## return true to end package CMS::Drupal::Modules::MembershipEntity
+
+=pod
+
+=head1 NAME
+
+CMS::Drupal::Modules::MembershipEntity::Stats
+
+=head1 SYNOPSIS
+
+ use CMS::Drupal::Modules::MembershipEntity::Stats;
+
+=head1 USAGE
+
+To come ...
+
+=cut
