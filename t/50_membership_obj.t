@@ -5,7 +5,7 @@ use warnings;
 
 use 5.010;
 use open ':std', ':encoding(utf8)';
-use Test::More;# tests => 2;
+use Test::More tests => 2;
 use Test::Group;
 use Carp qw/ croak /;
 use Data::Dumper;
@@ -33,8 +33,8 @@ subtest 'fetch_memberships() returns ::Membership objects', sub {
   }
 };
 
-subtest 'manually create a ::Membership object', sub {
-  plan tests => 8;
+subtest 'Manually create a ::Membership object', sub {
+  plan tests => 10;
  
   my %params = (
     mid       => 666,
@@ -61,12 +61,6 @@ subtest 'manually create a ::Membership object', sub {
   isa_ok( $mem, 'CMS::Drupal::Modules::MembershipEntity::Membership',
     'Created object ' );
 };
-
-
-done_testing();
-
-
-
 
 say '  ---  ' x 7;
 
