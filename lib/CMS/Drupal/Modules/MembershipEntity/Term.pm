@@ -4,7 +4,7 @@ package CMS::Drupal::Modules::MembershipEntity::Term;
 
 use strict;
 use warnings;
-
+use 5.010;
 use Moo;
 use Types::Standard qw/ :all /;
 use Data::Dumper;
@@ -34,7 +34,7 @@ sub is_current {
 sub is_future {
   my $self = shift;
   my $now = time;
-  return ($self->{end} > $self->{start} && $self->{start} > $now)
+  return ($self->{start} > $now && $self->{end} > $self->{start})
     ? 1 : 0;
 }
 
