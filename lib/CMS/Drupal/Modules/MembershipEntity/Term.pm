@@ -20,25 +20,28 @@ has array_position => ( is => 'ro', isa => Int, required => 1 );
 
 sub is_active {
   my $self = shift;
-  return $self->{'status'} eq '1' ? 1 : 0;
+  return $self->{status} eq '1'
+    ? 1 : 0;
 }
 
 sub is_current {
   my $self = shift;
   my $now = time;
-  return ($self->is_active && ($self->{'start'} <= $now && $now <= $self->{'end'}))
+  return ($self->{start} <= $now && $now <= $self->{end})
     ? 1 : 0;
 }
 
 sub is_future {
   my $self = shift;
   my $now = time;
-  return ($self->is_active && ($self->{'start'} > $now)) ? 1 : 0;
+  return ($self->{end} > $self->{start} && $self->{start} > $now)
+    ? 1 : 0;
 }
 
 sub was_renewal {
   my $self = shift;
-  return $self->{array_position} > 1 ? 1 : 0;
+  return ($self->{array_position} > 1)
+    ? 1 : 0;
 }
 
 1; ## return true to end package MembershipEntity::Term
