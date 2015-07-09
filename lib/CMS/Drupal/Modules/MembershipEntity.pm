@@ -21,12 +21,21 @@ sub fetch_memberships {
   my $prefix = $self->{'prefix'} || '';
 
   ## We accept an arrayref of mids as an optional parameter
+
   my $mids = shift;
   my $WHERE = ' ';
   if ( $mids ) {
-    $WHERE = 'WHERE ';
-    $WHERE .= "mid = '$_' OR " for @$mids;
-    $WHERE =~ s/ OR $//;
+    confess "FATAL: Empty list of mids." if scalar @{ $mids } < 1;
+
+    for (@$mids) {
+      # Let's be real strict about what we try to pass in to the DBMS
+      confess "FATAL: Invalid 'mid' (must be all ASCII digits)."
+        unless /^\d+$/a;
+      
+      $WHERE = 'WHERE ';
+      $WHERE .= "mid = '$_' OR " for @$mids;
+      $WHERE =~ s/ OR $//;
+    }
   }
   
   my $temp;
@@ -108,6 +117,10 @@ sub fetch_memberships {
 1; ## return true to end package CMS::Drupal::Modules::MembershipEntity
 
 =pod
+
+=head1 NAME
+
+CMS::Drupal::Modules::MembershipEntity
 
 =head1 SYNOPSIS
 
