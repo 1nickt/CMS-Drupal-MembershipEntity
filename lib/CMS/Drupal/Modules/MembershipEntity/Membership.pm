@@ -29,7 +29,7 @@ sub has_renewal {
   my $self = shift;
   $self->{'_has_renewal'} = 0;
   foreach my $term ( values $self->{'terms'} ) {
-    $self->{'_has_renewal'}++ if $term->is_future;
+    $self->{'_has_renewal'}++ if ($term->is_future and $term->is_active);
   }
   return $self->{'_has_renewal'};
 }
@@ -83,6 +83,16 @@ B<member_id> The unique Member ID that Drupal assigns to the Membership. This is
 B<type> The Membership type.
 
 B<terms> A hashref containing a L<CMS::Drupal::Modules::MembershipEntity::Term|CMS::Drupal::Modules::MembershipEntity::Term> object for each term belonging to the Membership, keyed by the B<tid> (term ID).
+
+=head2 METHODS
+
+=item is_active
+
+Returns true if the Membership is active, as defined bythe value of the 'status' field in the database record.
+
+=item has_renewal
+
+Returns true if the Membership has a renewal Term that has not yet started. This is defined by the value of $term->is_future and $term->is_active both being true for at least one of the Membership's Terms.
 
 =head1 AUTHOR
   
