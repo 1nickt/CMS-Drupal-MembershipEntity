@@ -45,18 +45,18 @@ CMS::Drupal::Modules::MembershipEntity::Membership
 
 =head1 SYNOPSIS
 
-use CMS::Drupal::Modules::MembershipEntity::Membership;
+ use CMS::Drupal::Modules::MembershipEntity::Membership;
 
-$mem = CMS::Drupal::Modules::MembershipEntity::Membership->new(
-         'mid'       => '1234',
-         'created'   => '1234565432',
-         'changed'   => '1234567890',
-         'uid'       => '5678',
-         'status'    => '1',
-         'member_id' => 'my_scheme_0123',
-         'type'      => 'my_type',
-         'terms'     => \%terms
-       );
+ $mem = CMS::Drupal::Modules::MembershipEntity::Membership->new(
+          'mid'       => '1234',
+          'created'   => '1234565432',
+          'changed'   => '1234567890',
+          'uid'       => '5678',
+          'status'    => '1',
+          'member_id' => 'my_scheme_0123',
+          'type'      => 'my_type',
+          'terms'     => \%terms
+        );
 
 =head1 USAGE
 

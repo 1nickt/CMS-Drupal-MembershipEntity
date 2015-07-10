@@ -54,18 +54,18 @@ CMS::Drupal::Modules::MembershipEntity::Term
 
 =head1 SYNOPSIS
 
-use CMS::Drupal::Modules::MembershipEntity::Term;
+ use CMS::Drupal::Modules::MembershipEntity::Term;
 
-$term = CMS::Drupal::Modules::MembershipEntity::Term->new(
-          'tid'            => '4321',
-          'mid'            => '1234',
-          'status'         => '1',
-          'term'           => 'One year',
-          'modifiers'      => 'a:0:{}',
-          'start'          => '1234567890',
-          'end'            => '1234568999',
-          'array_position' => '2',
-        );
+ $term = CMS::Drupal::Modules::MembershipEntity::Term->new(
+            'tid'            => '4321',
+            'mid'            => '1234',
+            'status'         => '1',
+            'term'           => 'One year',
+            'modifiers'      => 'a:0:{}',
+            'start'          => '1234567890',
+            'end'            => '1234568999',
+            'array_position' => '2',
+          );
 
 =head1 USAGE
 
