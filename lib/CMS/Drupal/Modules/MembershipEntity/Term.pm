@@ -93,13 +93,21 @@ B<array_position> The position the Term holds in the array of Terms belonging to
 
 =head2 METHODS
 
-B<is_active> Returns true if the Term has a status of 'active.' Note this does not mean it is the current Term (see below). Returns undef for any other status.
+=item is_active
 
-B<is_current> Returns true if the Term is the current Term (i.e. the current time falls between the start date-and-time and the end date-and-time). Returns undef otherwise.
+Returns true if the Term has a status of 'active.' Note this does not mean it is the current Term (see below). Returns undef for any other status.
 
-B<is_future> Returns true if the Term has not yet begun (i.e. the start date-and-time is after the current time). Memberships can be renewed before they expire, so a Term can have a status of 'active' but be held in the future.
+=item is_current
 
-B<was_renewal> Returns true if the Term was a renewal, as defined by the Term's B<array_position> being greater than 1 (i.e., there was an earlier Term).
+Returns true if the Term is the current Term (i.e. the current time falls between the start date-and-time and the end date-and-time). Returns undef otherwise.
+
+=item is_future
+
+Returns true if the Term has not yet begun (i.e. the start date-and-time is after the current time). Memberships can be renewed before they expire, so a Term can have a status of 'active' but be held in the future.
+
+=item was_renewal
+
+Returns true if the Term was a renewal, as defined by the Term's B<array_position> being greater than 1 (i.e., there was an earlier Term).
 
 =head1 AUTHOR
 
