@@ -93,6 +93,8 @@ B<array_position> The position the Term holds in the array of Terms belonging to
 
 =head2 METHODS
 
+=over 4
+
 =item is_active
 
 Returns true if the Term has a status of 'active.' Note this does not mean it is the current Term (see below). Returns undef for any other status.
@@ -109,17 +111,7 @@ Returns true if the Term has not yet begun (i.e. the start date-and-time is afte
 
 Returns true if the Term was a renewal, as defined by the Term's B<array_position> being greater than 1 (i.e., there was an earlier Term).
 
-=head1 AUTHOR
-
-Author: Nick Tonkin (tonkin@cpan.org)
-
-=head1 COPYRIGHT
-   
-Copyright (c) 2015 Nick Tonkin. All rights reserved.
-
-=head1 LICENSE
-
-You may distribute this module under the same license as Perl itself.
+=back
 
 =head1 SEE ALSO
 

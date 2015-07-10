@@ -285,5 +285,10 @@ simply by the fact that there was an earlier one).
 
 =head1 SEE ALSO
 
+L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Membership>
+
+L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Term>
+
+L<CMS::Drupal|CMS::Drupal>
 
 =cut

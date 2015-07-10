@@ -86,6 +86,8 @@ B<terms> A hashref containing a L<CMS::Drupal::Modules::MembershipEntity::Term|C
 
 =head2 METHODS
 
+=over 4
+
 =item is_active
 
 Returns true if the Membership is active, as defined bythe value of the 'status' field in the database record.
@@ -94,18 +96,8 @@ Returns true if the Membership is active, as defined bythe value of the 'status'
 
 Returns true if the Membership has a renewal Term that has not yet started. This is defined by the value of $term->is_future and $term->is_active both being true for at least one of the Membership's Terms.
 
-=head1 AUTHOR
-  
-Author: Nick Tonkin (tonkin@cpan.org)
-  
-=head1 COPYRIGHT
-  
-Copyright (c) 2015 Nick Tonkin. All rights reserved.
-  
-=head1 LICENSE
-  
-You may distribute this module under the same license as Perl itself.
-  
+=back
+
 =head1 SEE ALSO
   
 L<CMS::Drupal|CMS::Drupal>
