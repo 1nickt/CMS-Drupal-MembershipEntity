@@ -1,14 +1,10 @@
-#!/usr/bin/env perl
-
+#! perl
 use strict;
 use warnings;
-
 use 5.010;
-use open ':std', ':encoding(utf8)';
+
 use Test::More tests => 1;
 use Test::Group;
-use Carp qw/ croak /;
-use Data::Dumper;
 
 use CMS::Drupal;
 use CMS::Drupal::Modules::MembershipEntity;
@@ -116,6 +112,5 @@ subtest 'Test a Term object', sub {
   };
 };
 
-say '  ---  ' x 7;
-
 __END__
+

@@ -1,22 +1,22 @@
-#!/usr/bin/env perl
-
-# CMS::Drupal::Modules::MembershipEntity
-# test 01 - object and parameter validation
-
+#! perl
 use strict;
 use warnings;
 use 5.010;
 
-use Test::More tests => 11;
+use Test::More tests => 3;
 use DBI;
-
-my $dbh = DBI->connect('DBI:SQLite:dbname=:memory:', '', '', { RaiseError => 1 });
 
 BEGIN {
   use_ok( 'CMS::Drupal::Modules::MembershipEntity' ) or die;
+  use_ok( 'DBD::SQLite' ) or die;
 }
 
-can_ok( 'CMS::Drupal::Modules::MembershipEntity', 'new' );
+subtest 'Parameter validation and object instantiation', sub {
+  plan tests => 10;
+
+  my $dbh = DBI->connect('DBI:SQLite:dbname=:memory:', '', '', { RaiseError => 1 });
+
+  can_ok( 'CMS::Drupal::Modules::MembershipEntity', 'new' );
 
 ok( ! eval{ my $ME = CMS::Drupal::Modules::MembershipEntity->new() },
   'Correctly fail to instantiate an object with no parameters.' );
@@ -46,8 +46,7 @@ isa_ok( $ME, 'CMS::Drupal::Modules::MembershipEntity',
 my $ME2 = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh, prefix => 'foo_' );
 isa_ok( $ME2, 'CMS::Drupal::Modules::MembershipEntity',
   'Instantiate an object with valid $dbh and valid prefix parameter.' );
-
-
-say "-" x 78;
+};
 
 __END__
+
