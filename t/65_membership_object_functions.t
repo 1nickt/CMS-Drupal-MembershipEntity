@@ -49,7 +49,7 @@ subtest 'Test a Membership object', sub {
   };
 
   subtest 'Validate methods', sub {
-    plan tests => 6;
+    plan tests => 7;
 
     is( $mem->is_active, 1, 'is_active when status = 1' );
     
@@ -58,7 +58,7 @@ subtest 'Test a Membership object', sub {
       isnt( $mem->is_active, 1, 'not is_active when status = '. $_ );
     }
 
-    $mem->{'terms'} = {
+    $mem->{terms} = {
                        '4088' => bless( {
                                          'array_position' => 2,
                                          'status' => 1,
@@ -80,7 +80,11 @@ subtest 'Test a Membership object', sub {
                                          'start' => 1308639600
                                        }, 'CMS::Drupal::Modules::MembershipEntity::Term' )
                     };
-    is( $mem->has_renewal, 1, 'has_renewal' );
+    is( $mem->has_renewal, 1, 'has_renewal when term is_future and is_active' );
+    
+    # future term must be active to count for has_renewal
+    $mem->{terms}->{4088}->{status} = 0;
+    isnt( $mem->has_renewal, 1, '! has_renewal when term is_future but not is_active' );
 
     $mem->{terms} = { 
                      '3920' => bless( {
@@ -94,7 +98,7 @@ subtest 'Test a Membership object', sub {
                                        'start' => 1308639600
                                      }, 'CMS::Drupal::Modules::MembershipEntity::Term' )
                        };  
-    isnt( $mem->has_renewal, 1, '! has_renewal' );
+    isnt( $mem->has_renewal, 1, '! has_renewal when not term is_future' );
 
   };
 };
