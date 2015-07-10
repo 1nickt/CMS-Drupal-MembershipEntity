@@ -1,14 +1,12 @@
-#!/usr/bin/env perl
-
+#! perl
 use strict;
 use warnings;
-
 use 5.010;
+
 use open ':std', ':encoding(utf8)';
 use Test::More tests => 1;
 use Test::Group;
 
-use Data::Dumper;
 use CMS::Drupal;
 use CMS::Drupal::Modules::MembershipEntity;
 use CMS::Drupal::Modules::MembershipEntity::Test qw/ build_test_db build_test_data/;
@@ -56,6 +54,5 @@ subtest 'Feed various things to fetch_memberships()', sub {
   };
 };
 
-say '  ---  ' x 7;
-
 __END__
+

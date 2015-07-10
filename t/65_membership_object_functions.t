@@ -1,14 +1,10 @@
-#!/usr/bin/env perl
-
+#! perl
 use strict;
 use warnings;
-
 use 5.010;
-use open ':std', ':encoding(utf8)';
+
 use Test::More tests => 1;
 use Test::Group;
-use Carp qw/ croak /;
-use Data::Dumper;
 
 use CMS::Drupal;
 use CMS::Drupal::Modules::MembershipEntity;
@@ -68,10 +64,10 @@ subtest 'Test a Membership object', sub {
                                          'status' => 1,
                                          'tid' => 4088,
                                          'term' => 'import',
-                                         'end' => 1448611200,
+                                         'end' => (time + (365*24*3600) + 60),
                                          'mid' => 4086,
                                          'modifiers' => 'a:0:{}',
-                                         'start' => 1436489565
+                                         'start' => (time + 60)
                                        }, 'CMS::Drupal::Modules::MembershipEntity::Term' ),
                       '3920' => bless( {
                                          'array_position' => 1,
@@ -103,6 +99,5 @@ subtest 'Test a Membership object', sub {
   };
 };
 
-say '  ---  ' x 7;
-
 __END__
+

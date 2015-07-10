@@ -1,8 +1,11 @@
-#!/usr/bin/env perl
+#! perl
+use strict;
+use warnings;
+use 5.010;
 
 ##############################################################################
 #
-# This is t/002_valid_drupal.t It tests the 
+# This is t/20_valid_drupal.t It tests the 
 # CMS::Drupal::Modules::MembershipEntity module against a real Drupal
 # database. It looks in your environment to see if you have provided
 # connection information.
@@ -40,7 +43,7 @@
 # command prompt:
 #
 # $ DRUPAL_TEST_CREDS=database,foo,driver,SQLite
-# $ perl t/002_valid_drupal.t
+# $ perl t/20_valid_drupal.t
 #
 # If you report a bug or ask for support for this module, the first thing I 
 # will ask for is the output from these tests, so make sure and do this, 'k?
@@ -49,22 +52,13 @@
 #
 #############################################################################
 
-use strict;
-use warnings;
-use 5.010;
-
 use Cwd qw/ abs_path /;
 my $me = abs_path($0);
 
-use Test::More tests => 12;
+use Test::More tests => 3;
 
-# CMS::Drupal::Modules::MembershipEntity
-# test 02 - database readiness
-
-BEGIN {
-  use_ok( 'CMS::Drupal' ) or die;
-  use_ok( 'CMS::Drupal::Modules::MembershipEntity' ) or die;
-}
+use CMS::Drupal;
+use CMS::Drupal::Modules::MembershipEntity;
 
 my %params;
 my $skip = 0;
@@ -87,106 +81,112 @@ if ( exists $ENV{'DRUPAL_TEST_CREDS'} ) {
   $skip++;
 }
 
-
 SKIP: {
-  skip "No database credentials supplied", 10, if $skip;
+  skip "No database credentials supplied", 8, if $skip;
 
-  ###########
+  my $drupal;
+  my $dbh;
 
-  can_ok( 'CMS::Drupal', 'new' );
-  my $drupal = CMS::Drupal->new;
-  isa_ok( $drupal, 'CMS::Drupal');
+  subtest 'Object instantiation', sub {
+    plan tests => 2;
 
-  ###########
+    can_ok( 'CMS::Drupal', 'new' );
+    $drupal = CMS::Drupal->new;
+    isa_ok( $drupal, 'CMS::Drupal');
+  };
 
-  can_ok( 'CMS::Drupal', 'dbh' );
-  my $dbh = $drupal->dbh( %params );
-  isa_ok( $dbh, 'DBI::db');
+  subtest 'Connect to the Drupal', sub {
+    plan tests => 2;
 
-  ###########
+    can_ok( 'CMS::Drupal', 'dbh' );
+    $dbh = $drupal->dbh( %params );
+    isa_ok( $dbh, 'DBI::db');
+  };
 
-  my $sth = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity', '%' );
-  my @cols = map { $_->[3] } @{ $sth->fetchall_arrayref };
-  my @wanted_cols = qw/ mid
-                        member_id
-                        type
-                        uid
-                        status
-                        created
-                        changed /;
+  subtest 'Test membership_entity* tables', sub {
+    plan tests => 6;
 
-  is_deeply( [ sort @cols ], [ sort @wanted_cols ],
-    'Get correct column names from membership_entity table.');
+    my $sth1 = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity', '%' );
+    my @cols1 = map { $_->[3] } @{ $sth1->fetchall_arrayref };
+    my @wanted_cols1 = qw/ mid
+                           member_id
+                           type
+                           uid
+                           status
+                           created
+                           changed /;
 
-  ###########
+    is_deeply( [ sort @cols1 ], [ sort @wanted_cols1 ],
+      'Get correct column names from membership_entity table.');
 
-  $sth = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity_term', '%' );
-  @cols = map { $_->[3] } @{ $sth->fetchall_arrayref };
-  @wanted_cols = qw/ id
-                     mid
-                     status
-                     term
-                     modifiers
-                     start
-                     end /;
+    ###########
 
-  is_deeply( [ sort @cols ], [ sort @wanted_cols ],
-    'Get correct column names from membership_entity_terms table.');
+    my $sth2 = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity_term', '%' );
+    my @cols2 = map { $_->[3] } @{ $sth2->fetchall_arrayref };
+    my @wanted_cols2 = qw/ id
+                           mid
+                           status
+                           term
+                           modifiers
+                           start
+                           end /;
 
-  ############
+    is_deeply( [ sort @cols2 ], [ sort @wanted_cols2 ],
+      'Get correct column names from membership_entity_terms table.');
+
+    ############
  
-  $sth = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity_type', '%' );
-  @cols = map { $_->[3] } @{ $sth->fetchall_arrayref };
-  @wanted_cols = qw/ id
-                     type
-                     label
-                     weight
-                     description
-                     data
-                     status
-                     module /;
+    my $sth3 = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity_type', '%' );
+    my @cols3 = map { $_->[3] } @{ $sth3->fetchall_arrayref };
+    my @wanted_cols3 = qw/ id
+                          type
+                          label
+                          weight
+                          description
+                          data
+                          status
+                          module /;
 
-  is_deeply( [ sort @cols ], [ sort @wanted_cols ],
-    'Get correct column names from membership_entity_type table.');
+    is_deeply( [ sort @cols3 ], [ sort @wanted_cols3 ],
+      'Get correct column names from membership_entity_type table.');
 
-  ############
+    ############
 
-  $sth = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity_secondary_member', '%' );
-  @cols = map { $_->[3] } @{ $sth->fetchall_arrayref };
-  @wanted_cols = qw/ mid
-                     uid
-                     weight /;
-
-  is_deeply( [ sort @cols ], [ sort @wanted_cols ],
-    'Get correct column names from membership_entity_secondary_member table.' );
-
-  ############
-
-  # We know there is at least one Membership type in a working installation
+    my $sth4 = $dbh->column_info( undef, $dbh->{ 'Name' }, 'membership_entity_secondary_member', '%' );
+    my @cols4 = map { $_->[3] } @{ $sth4->fetchall_arrayref };
+    my @wanted_cols4 = qw/ mid
+                           uid
+                           weight /;
   
-  my $sql = qq|
-    SELECT COUNT(id) AS count
-    FROM membership_entity_type
-  |;
-
-  $sth = $dbh->prepare( $sql );
-
-  ok( $sth->execute(),
-    'Execute a SELECT on the membership_entity_type table.' );
-
-  ok( $sth->fetchrow_hashref->{'count'} > 0,
-    'SELECT COUNT(id) FROM membership_entity_type > 0' );
-
-  # But we can't assume anything else, even that there is a single row in the
-  # membership_entity or membership_entity_term tables, so we can't really 
-  # test anything else ...
-  #
-  # We'll test the functionality with DBD::Mock in the next test
+    is_deeply( [ sort @cols4 ], [ sort @wanted_cols4 ],
+      'Get correct column names from membership_entity_secondary_member table.' );
   
-  ##############
+    ############
+  
+    # We know there is at least one Membership type in a working installation
+    
+    my $sql56 = qq|
+      SELECT COUNT(id) AS count
+      FROM membership_entity_type
+    |;
+  
+    my $sth56 = $dbh->prepare( $sql56 );
+  
+    ok( $sth56->execute(),
+      'Execute a SELECT on the membership_entity_type table.' );
+  
+    ok( $sth56->fetchrow_hashref->{'count'} > 0,
+      'SELECT COUNT(id) FROM membership_entity_type > 0' );
+    
+    # But we can't assume anything else, even that there is a single row in the
+    # membership_entity or membership_entity_term tables, so we can't really 
+    # test anything else ...
+    #
+    # We'll test the functionality with a test DB in the next test
+    
+  };
 
 } # end SKIP block
 
-say "-" x 78;
-
 __END__
+

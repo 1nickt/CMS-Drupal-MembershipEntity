@@ -87,7 +87,7 @@ sub build_and_validate_test_db {
     };
   }; # done building the test DB
 
-  $dbh->sqlite_backup_to_file("$FindBin::Bin/data/.test_db.sqlite");
+  $dbh->sqlite_backup_to_file("$FindBin::Bin/data/.DB.sqlite");
 
   return $dbh;
 }
