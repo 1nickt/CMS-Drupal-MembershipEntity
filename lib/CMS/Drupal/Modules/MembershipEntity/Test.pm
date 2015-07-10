@@ -320,6 +320,16 @@ among their attributes an array of hashrefs (Membership Term objects) ...
  
 =back
 
+=head1 SEE ALSO
+
+L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Membership>
+
+L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Term>
+
+L<CMS::Drupal::Modules::MembershipEntity|CMS::Drupal::Modules::MembershipEntity>
+
+L<CMS::Drupal|CMS::Drupal>
+
 =cut
 
 
