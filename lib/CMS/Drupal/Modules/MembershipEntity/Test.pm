@@ -238,9 +238,11 @@ CMS::Drupal::Modules::MembershipEntity::Test
 
 Use this module when testing the CMS::Drupal::Modules::MembershipEntity modules.
 
-=head2 Methods
+=head2 METHODS
 
-=head3 build_test_db
+=over 4
+
+=item build_and_validate_test_db
 
 This method returns a database handle ($dbh) that is connected to an in-memory SQLite database.
 The database is built by this method using data files that must be contained in the same directory that
@@ -248,27 +250,28 @@ the calling script lives in.
 
 The method takes one argument, which must be a $drupal object. This is because it calls $drupal->dbh()
 to generate its database handle, which, because we are using SQLite, contains the database inside the 
-very handle itself.
+handle itself.
 
 The files are:
 
-=over 4
+B<test_db.sql>
 
-=item test_db.sql
+B<test_types.dat>
 
-=item test_types.dat
+B<test_memberships.dat>
 
-=item test_memberships.dat
-
-=item test_terms.dat
-
-=back
+B<test_terms.dat>
 
 Note that this method uses Test::More and Test::Group itself to report success/failures in building
 the test database. So in your scipt that calls this method you should add one additional test to
 your plan.
 
-=head3 build_test_data
+=item build_test_db
+
+This method does the same as the previous one except it does not run tests itself, in other words
+it builds the test db and the test data silently.
+
+=item build_test_data
 
 This method returns a data structure containing the Memberships as they would be returned by
 CMS::Drupal::Modules::MembershipEntity::fetch_memberships(). It creates the data structure
@@ -315,6 +318,7 @@ among their attributes an array of hashrefs (Membership Term objects) ...
                    'type' => 'membership'
                   }, 'CMS::Drupal::Modules::MembershipEntity::Membership' ),
  
+=back
 
 =cut
 
