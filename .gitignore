@@ -3,6 +3,7 @@
 !/t
 !Changes
 !dist.ini
+!weaver.ini
 !.gitignore
 /t/data/.DB.sqlite
 
