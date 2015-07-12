@@ -32,14 +32,14 @@ subtest 'Manually create a ::Membership object', sub {
   plan tests => 10;
  
   my %params = (
-    mid       => 666,
-    member_id => 999,
-    type      => 'membership',
-    status    => 1,
-    uid       => 6996,
-    created   => 1379916000,
-    changed   => 1379987654,
-    terms     => { 23456 => bless( {}, 'CMS::Drupal::Modules::MembershipEntity::Term' ) },
+    'mid'       => 666,
+    'member_id' => 999,
+    'type'      => 'membership',
+    'status'    => 1,
+    'uid'       => 6996,
+    'created'   => 1379916000,
+    'changed'   => 1379987654,
+    'terms'     => { 23456 => bless( {}, 'CMS::Drupal::Modules::MembershipEntity::Term' ) },
   );  
   
   ok( ! eval { my $mem = CMS::Drupal::Modules::MembershipEntity::Membership->new },

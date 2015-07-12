@@ -53,7 +53,7 @@ subtest 'Test a Term object', sub {
     is( $term->is_active, 1, 'is_active when status = 1' );
     
     for (0, 2, 3) {
-      $term->{status} = $_;
+      $term->{'status'} = $_;
       isnt( $term->is_active, 1, '! is_active when status = '. $_ );
     }
 
@@ -82,7 +82,7 @@ subtest 'Test a Term object', sub {
     my $count = 0;
     for ( @periods ) {
       $count++; 
-      ( $term->{start}, $term->{end} ) = ( $_->[0], $_->[1] );
+      ( $term->{'start'}, $term->{'end'} ) = ( $_->[0], $_->[1] );
       
       if ($count == 1) {
         is( $term->is_current, 1, '"Six months ago" to "six months from now" is_current' );
@@ -97,13 +97,13 @@ subtest 'Test a Term object', sub {
     }
 
     
-    $term->{array_position} = 1;
+    $term->{'array_position'} = 1;
     is( $term->was_renewal, 0, '! was_renewal for array_position 1' );
     
     subtest 'Various array_position values', sub {
       test 'was_renewal for array_position > 1', sub { 
         for( 2, 3, 4, 5, 42, 665, 667) {
-          $term->{array_position} = $_;
+          $term->{'array_position'} = $_;
           is( $term->was_renewal, 1, 'was_renewal for array_position '. $_ );
         }
       };
