@@ -26,12 +26,12 @@ sub fetch_memberships {
  
   if ( $mids ) {
     if ( scalar @{ $mids } < 1 ) {
-      carp "Empty arrayref passed to fetch_memberships() ... returning all Memberships";
+      carp 'Empty arrayref passed to fetch_memberships() ... returning all Memberships';
     }
 
     for (@$mids) {
       # Let's be real strict about what we try to pass in to the DBMS
-      confess "FATAL: Invalid 'mid' (must be all ASCII digits)."
+      confess 'FATAL: Invalid mid (must be all ASCII digits).'
         unless /^[0-9]+$/;
       
       $WHERE = 'WHERE ';
@@ -117,35 +117,33 @@ sub fetch_memberships {
 }
 
 1; ## return true to end package CMS::Drupal::Modules::MembershipEntity
-
-=pod
-
-=head1 NAME
-
-CMS::Drupal::Modules::MembershipEntity
+__END__
 
 =head1 SYNOPSIS
 
- use CMS::Drupal::Modules::MembershipEntity;
+  use CMS::Drupal::Modules::MembershipEntity;
 
- my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
+  my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
 
- my $hashref = $ME->fetch_memberships;
- # or:
- my $hashref = $ME->fetch_memberships([ 123, 456, 789 ]);
- # or:
- my $hashref = $ME->fetch_memberships([ 123 ]);
- # or:
- my $hashref = $ME->fetch_memberships( \@list );
+  my $hashref = $ME->fetch_memberships;
+
+  # or:
+  my $hashref = $ME->fetch_memberships([ 123, 456, 789 ]);
+
+  # or:
+  my $hashref = $ME->fetch_memberships([ 123 ]);
+
+  # or:
+  my $hashref = $ME->fetch_memberships( \@list );
  
- foreach my $mid ( sort keys %{$hashref} ) {
-   my $mem = $hashref->{ $mid };
+  foreach my $mid ( sort keys %{$hashref} ) {
+    my $mem = $hashref->{ $mid };
    
-   print $mem->{'type'};
-   &send_newsletter( $mem->{'uid'} ) if $mem->active;
+    print $mem->{'type'};
+    &send_newsletter( $mem->{'uid'} ) if $mem->active;
    
-   # etc ...
- }
+    # etc ...
+  }
 
 =head1 USAGE
 
@@ -157,9 +155,7 @@ methods you can use on your Membership.
 For this reason the methods actually provided by the submodules are documented
 here.
 
-=head2 METHODS
-
-=head2 fetch_memberships
+=method fetch_memberships
 
 This method returns a hashref containing Membership objects indexed by B<mid>.
 
@@ -170,124 +166,99 @@ of them.
 When called with an arrayref containing B<mid>s, the hashref will contain an 
 object for each mid in the arrayref.
 
- # Fetch a single Membership
- my $hashref = $ME->fetch_memberships([ 1234 ]); 
+  # Fetch a single Membership
+  my $hashref = $ME->fetch_memberships([ 1234 ]); 
 
- # Fetch a set of Memberships
- my $hashref = $ME->fetch_memberships([ 1234, 5678 ]);
+  # Fetch a set of Memberships
+  my $hashref = $ME->fetch_memberships([ 1234, 5678 ]);
 
- # Fetch a set of Memberships using a list you prepared elsewhere
- my $hashref = $ME->fetch_memberships( $array_ref );
+  # Fetch a set of Memberships using a list you prepared elsewhere
+  my $hashref = $ME->fetch_memberships( $array_ref );
 
- # Fetch all your Memberships
- my $hashref = $ME->fetch_memberships;
+  # Fetch all your Memberships
+  my $hashref = $ME->fetch_memberships;
 
 =head2 Memberships
 
 This module uses CMS::Drupal::Modules::MembershipEntity::Membership so you
-don't have to. The methods described below are actually in the latter 
-module.
+don't have to. The methods shown below are actually in the latter 
+module where they are documented completely.
 
- my $hashref = $ME->fetch_memberships([ 1234 ]);
- my $mem = $hashref->{'1234'};
+  my $hashref = $ME->fetch_memberships([ 1234 ]);
+  my $mem = $hashref->{'1234'};
+  # now you have a Membership object
 
 =head3 Attributes
 
 You can directly access all the Membership's attributes as follows:
 
- $mem->{ attr_name }
+  $mem->{ attr_name }
 
 Where attr_name is one of:
 
- mid           
- member_id
- type
- uid
- status
- created
- changed
+  mid           
+  member_id
+  type
+  uid
+  status
+  created
+  changed
 
 There is also another attribute `terms`, which contains an hashref of Term
 objects, indexed by B<tid>. Each Term can be accessed by the methods described
 in the Membership Terms section below.
 
-=head3 is_active
+=head3 Membership methods
 
-Returns true if the Membership status is active, else returns false.
+Once you have the Membership object, you can call some methods on it:
 
   print "User $mem->{'uid'} is in good standing" if $mem->is_active;
-
-=head3 has_renewal
-
-Returns true if the Membership has at least one Term for which
-is_future returns true.
-
- print "User $mem->{'uid'} has already renewed" if $mem->has_renewal;
+  print "User $mem->{'uid'} has already renewed" if $mem->has_renewal;
 
 =head2 Membership Terms
 
 This module uses CMS::Drupal::Modules::MembershipEntity::Term so you
 don't have to. The methods described below are actually in the latter
-module.
+module where they are documented compeletely.
 
- while ( my ($tid, $term) = each %{$mem->{'terms'}} ) {
-  # do something ...
- }
+  while ( my ($tid, $term) = each %{$mem->{'terms'}} ) {
+    # do something ...
+  }
 
-=head3 Attributes
+=head2 Attributes
 
 You can directly access all the Term's attributes as follows:
 
- $term->{ attr_name }
+  $term->{ attr_name }
 
 Where attr_name is one of:
 
- tid
- mid
- status
- term
- modifiers
- start
- end
+  tid
+  mid
+  status
+  term
+  modifiers
+  start
+  end
 
-There is also another attribute, `array_position`, which is used to determine if
+There is also another attribute, 'array_position', which is used to determine if
 the Term is a renewal, etc.
 
-=head3 is_active
+=head3 Membership Term methods
 
-Returns true if the Term status is active, else returns false.
-(Note that 'active' does not necessarily mean 'current', see below.)
+  print "$term->{'tid'} is active" if $term->is_active;
 
- print "$term->{'tid'} is active" if $term->is_active;
+  print "This is a live one" if $term->is_current;
 
-=head3 is_current
+  print "$mem->{'uid'} has a prepaid renewal" if $term->is_future;
 
-Returns true if the Term is current, meaning that the datetime now
-falls between the start and end of the Term.
-(Note that the Term may be 'current' but not 'active', eg 'pending'.)
-
- print "This is a live one" if $term->is_current;
-
-=head3 is_future
-
-Returns true if the `start` of the Term is in the future compared to now.
-
- print "$mem->{'uid'} has a prepaid renewal" if $term->is_future;
-
-=head3 was_renewal
-
-Returns true if the Term was a renewal when it was created (as determined
-simply by the fact that there was an earlier one).
-
- print "$mem->{'uid'} is a repeat customer" if $term->was_renewal;
+  print "$mem->{'uid'} is a repeat customer" if $term->was_renewal;
 
 
 =head1 SEE ALSO
 
-L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Membership>
+=for :list
+* L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Membership>
+* L<CMS::Drupal::Modules::MembershipEntity::Term|CMS::Drupal::Modules::MembershipEntity::Term>
+* L<CMS::Drupal|CMS::Drupal>
 
-L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Term>
-
-L<CMS::Drupal|CMS::Drupal>
-
-=cut

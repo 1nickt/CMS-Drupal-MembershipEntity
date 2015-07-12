@@ -22,9 +22,9 @@ subtest '::Membership objects contain ::Term objects', sub {
     my $hashref = $ME->fetch_memberships( $array );
     test 'isa valid Term object for '. @$array .' Memberships' , sub {
       foreach my $mem ( values %{ $hashref } ) {
-        foreach my $term ( values %{ $mem->{terms} } ) {
+        foreach my $term ( values %{ $mem->{'terms'} } ) {
           isa_ok( $term, 'CMS::Drupal::Modules::MembershipEntity::Term',
-            'tid => '. $term->{tid} );
+            'tid => '. $term->{'tid'} );
         }
       } 
     };
@@ -35,14 +35,14 @@ subtest 'Manually create a ::Term object', sub {
   plan tests => 10;
  
   my %params = (
-    tid            => 666,
-    mid            => 999,
-    status         => 1,
-    term           => '1 year',
-    modifiers      => 'a:0:{}',
-    start          => time - (180 * 24 * 3600), # functions are relative to "now"
-    end            => time + (180 * 24 * 3600), # so test data must be, too.
-    array_position => 1
+    'tid'            => 666,
+    'mid'            => 999,
+    'status'         => 1,
+    'term'           => '1 year',
+    'modifiers'      => 'a:0:{}',
+    'start'          => time - (180 * 24 * 3600), # functions are relative to "now"
+    'end'            => time + (180 * 24 * 3600), # so test data must be, too.
+    'array_position' => 1
   );  
   
   ok( ! eval { my $term = CMS::Drupal::Modules::MembershipEntity::Term->new },

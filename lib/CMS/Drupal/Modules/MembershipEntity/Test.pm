@@ -159,13 +159,13 @@ sub build_test_data {
   for ( read_lines("$FindBin::Bin/data/test_memberships.dat", chomp => 1) ) {
     my @fields = split(',');
     if (scalar @$mids > 0) { next unless exists $include{ $fields[0] }; }
-    $membs{ $fields[0] } = { mid       => $fields[0],
-                             member_id => $fields[1],
-                             type      => $fields[2],
-                             uid       => $fields[3],
-                             status    => $fields[4],
-                             created   => $fields[5],
-                             changed   => $fields[6] };
+    $membs{ $fields[0] } = { 'mid'       => $fields[0],
+                             'member_id' => $fields[1],
+                             'type'      => $fields[2],
+                             'uid'       => $fields[3],
+                             'status'    => $fields[4],
+                             'created'   => $fields[5],
+                             'changed'   => $fields[6] };
   }
 
   my %term_count;
@@ -180,14 +180,14 @@ sub build_test_data {
       $fields[ $_ ] = timelocal( @datetime );
     }
     $terms{ $fields[0] } = bless(
-                          { tid            => $fields[0],
-                            mid            => $fields[1],
-                            status         => $fields[2],
-                            term           => $fields[3],
-                            modifiers      => $fields[4],
-                            start          => $fields[5],
-                            end            => $fields[6],
-                            array_position => $term_count{ $fields[1] } },
+                          { 'tid'            => $fields[0],
+                            'mid'            => $fields[1],
+                            'status'         => $fields[2],
+                            'term'           => $fields[3],
+                            'modifiers'      => $fields[4],
+                            'start'          => $fields[5],
+                            'end'            => $fields[6],
+                            'array_position' => $term_count{ $fields[1] } },
                           'CMS::Drupal::Modules::MembershipEntity::Term' );
   }
 
@@ -203,44 +203,35 @@ sub build_test_data {
 }
 
 1; # End package
-
-=pod
-
-=head1 NAME
-
-CMS::Drupal::Modules::MembershipEntity::Test
+__END__
 
 =head1 SYNOPSIS
 
- use Test::More;
- use CMS::Drupal;
- use CMS::Drupal::Modules::MembershipEntity::Test qw/ build_test_db build_test_data/;
+  use Test::More;
+  use CMS::Drupal;
+  use CMS::Drupal::Modules::MembershipEntity::Test qw/ build_test_db build_test_data/;
 
- my $drupal = CMS::Drupal->new;
+  my $drupal = CMS::Drupal->new;
 
- my $dbh = build_test_db( $drupal );
+  my $dbh = build_test_db( $drupal );
 
- my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
+  my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
 
- my $hashref = $ME->fetch_memberships;
- my $cmp_data = build_test_data;
+  my $hashref = $ME->fetch_memberships;
+  my $cmp_data = build_test_data;
 
- # or:
+  # or:
  
- my $hashref = $ME->fetch_memberships([ 1234, 5678 ]);
- my $cmp_data = build_test_data([ 1234, 5678 ]);
+  my $hashref = $ME->fetch_memberships([ 1234, 5678 ]);
+  my $cmp_data = build_test_data([ 1234, 5678 ]);
 
- is_deeply($hashref, $cmp_data, 'Data matches'); 
+  is_deeply($hashref, $cmp_data, 'Data matches'); 
 
 =head1 DESCRIPTION
 
 Use this module when testing the CMS::Drupal::Modules::MembershipEntity modules.
 
-=head2 METHODS
-
-=over 4
-
-=item build_and_validate_test_db
+=method build_and_validate_test_db
 
 This method returns a database handle ($dbh) that is connected to an in-memory SQLite database.
 The database is built by this method using data files that must be contained in the same directory that
@@ -252,24 +243,22 @@ handle itself.
 
 The files are:
 
-B<test_db.sql>
-
-B<test_types.dat>
-
-B<test_memberships.dat>
-
-B<test_terms.dat>
+=for :list
+* B<test_db.sql>
+* B<test_types.dat>
+* B<test_memberships.dat>
+* B<test_terms.dat>
 
 Note that this method uses Test::More and Test::Group itself to report success/failures in building
 the test database. So in your scipt that calls this method you should add one additional test to
 your plan.
 
-=item build_test_db
+=method build_test_db
 
 This method does the same as the previous one except it does not run tests itself, in other words
 it builds the test db and the test data silently.
 
-=item build_test_data
+=method build_test_data
 
 This method returns a data structure containing the Memberships as they would be returned by
 CMS::Drupal::Modules::MembershipEntity::fetch_memberships(). It creates the data structure
@@ -279,55 +268,48 @@ The method takes an optional single argument, which is an arrayref containing a 
 Only the Memberships associated with the B<mid>s provided will; be included in the data
 returned.
 
- $cmp_data = build_test_data( [ 1234, 5678 ] );
+  $cmp_data = build_test_data( [ 1234, 5678 ] );
 
 The data structure is a hashref of hashrefs (Membership objects, indexed by mid, containing
 among their attributes an array of hashrefs (Membership Term objects) ...
 
- '4086' => bless( {
-                   'created' => '1354086000',
-                   'mid' => '4086',
-                   'changed' => '1400604379',
-                   'uid' => '12305',
-                   'status' => '1',
-                   'member_id' => '01252',
-                   'terms' => {
-                               '4088' => bless( {
-                                                 'mid' => '4086',
-                                                 'array_position' => 2,
-                                                 'status' => '1',
-                                                 'modifiers' => 'a:0:{}',
-                                                 'end' => 1448611200,
-                                                 'start' => 1354089600,
-                                                 'term' => 'import',
-                                                 'tid' => '4088'
-                                                }, 'CMS::Drupal::Modules::MembershipEntity::Term' ),
-                               '3920' => bless( {
-                                                 'mid' => '4086',
-                                                 'array_position' => 1,
-                                                 'status' => '0',
-                                                 'modifiers' => 'a:0:{}',
-                                                 'end' => 1403247600,
-                                                 'start' => 1308639600,
-                                                 'term' => 'import',
-                                                 'tid' => '3920'
-                                                }, 'CMS::Drupal::Modules::MembershipEntity::Term' )
-                              },
-                   'type' => 'membership'
-                  }, 'CMS::Drupal::Modules::MembershipEntity::Membership' ),
+  '4086' => bless( {
+                    'mid'       => '4086',
+                    'uid'       => '12305',
+                    'status'    => '1',
+                    'member_id' => '01252',
+                    'terms' => {
+                                '4088' => bless( {
+                                                  'mid'            => '4086',
+                                                  'array_position' => 2,
+                                                  'status'         => '1',
+                                                  'modifiers'      => 'a:0:{}',
+                                                  'end'            => 1448611200,
+                                                  'start'          => 1354089600,
+                                                  'term'           => 'import',
+                                                  'tid'            => '4088'
+                                                 }, 'CMS::Drupal::Modules::MembershipEntity::Term' ),
+                                '3920' => bless( {
+                                                  'mid'            => '4086',
+                                                  'array_position' => 1,
+                                                  'status'         => '0',
+                                                  'modifiers'      => 'a:0:{}',
+                                                  'end'            => 1403247600,
+                                                  'start'          => 1308639600,
+                                                  'term'           => 'import',
+                                                  'tid'            => '3920'
+                                                 }, 'CMS::Drupal::Modules::MembershipEntity::Term' )
+                               },
+                    'type' => 'membership',
+                    'created'   => '1354086000',
+                    'changed'   => '1400604379'
+                   }, 'CMS::Drupal::Modules::MembershipEntity::Membership' ),
  
-=back
-
 =head1 SEE ALSO
 
-L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Membership>
-
-L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Term>
-
-L<CMS::Drupal::Modules::MembershipEntity|CMS::Drupal::Modules::MembershipEntity>
-
-L<CMS::Drupal|CMS::Drupal>
-
-=cut
-
+=for :list
+* L<CMS::Drupal::Modules::MembershipEntity::Membership|CMS::Drupal::Modules::MembershipEntity::Membership>
+* L<CMS::Drupal::Modules::MembershipEntity::Term|CMS::Drupal::Modules::MembershipEntity::Term>
+* L<CMS::Drupal::Modules::MembershipEntity|CMS::Drupal::Modules::MembershipEntity>
+* L<CMS::Drupal|CMS::Drupal>
 

@@ -9,7 +9,7 @@ use FindBin;
 use File::Slurp::Tiny qw/ read_file read_lines /;
 use Time::Local;
 
-subtest "We have all our parts" => sub {
+subtest 'We have all our parts' => sub {
   plan tests => 4;
   
   use_ok( 'CMS::Drupal' ) or die;
@@ -40,7 +40,7 @@ subtest "Create a ::MembershipEntity object and check its methods" => sub {
   can_ok( 'CMS::Drupal::Modules::MembershipEntity', 'fetch_memberships' );
 };
 
-subtest "Validate data integrity", => sub {
+subtest 'Validate data integrity', => sub {
   plan tests => 1;
 
   ## Make a structure from the data files and compare to what the 
