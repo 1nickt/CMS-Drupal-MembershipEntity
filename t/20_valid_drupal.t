@@ -1,7 +1,6 @@
 #! perl
 use strict;
 use warnings;
-use 5.010;
 
 ##############################################################################
 #
@@ -66,7 +65,7 @@ my $skip = 0;
 if ( exists $ENV{'DRUPAL_TEST_CREDS'} ) { 
   %params = ( split ',', $ENV{'DRUPAL_TEST_CREDS'} );
 } else {
-  say qq{ 
+  print qq{ 
 
    No database credentials found in ENV. 
    Skipping Drupal database tests.

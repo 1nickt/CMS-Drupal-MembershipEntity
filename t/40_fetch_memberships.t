@@ -1,7 +1,6 @@
 #! perl
 use strict;
 use warnings;
-use 5.010;
 
 use open ':std', ':encoding(utf8)';
 use Test::More tests => 1;
@@ -31,7 +30,7 @@ subtest 'Feed various things to fetch_memberships()', sub {
       my $cmp_data = build_test_data( $array );
   
       test 'Data comparison with '. @$array .' mids', sub {
-        is( (scalar keys $hashref), (scalar keys $cmp_data),
+        is( (scalar keys %{ $hashref }), (scalar keys %{ $cmp_data }),
           'One item returned for each mid passed in' );
       
         is_deeply($hashref, $cmp_data,

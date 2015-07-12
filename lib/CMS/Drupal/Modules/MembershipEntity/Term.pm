@@ -4,10 +4,9 @@ package CMS::Drupal::Modules::MembershipEntity::Term;
 
 use strict;
 use warnings;
-use 5.010;
+
 use Moo;
 use Types::Standard qw/ :all /;
-use Data::Dumper;
 
 has tid            => ( is => 'ro', isa => Int, required => 1 );
 has mid            => ( is => 'ro', isa => Int, required => 1 );

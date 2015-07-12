@@ -1,9 +1,7 @@
 package CMS::Drupal::Modules::MembershipEntity::Test;
 
-
 # ABSTRACT: Exports some helper routines for testing
 
-use 5.010;
 use base "Exporter::Tiny";
 our @EXPORT = qw/ build_test_db
                   build_and_validate_test_db

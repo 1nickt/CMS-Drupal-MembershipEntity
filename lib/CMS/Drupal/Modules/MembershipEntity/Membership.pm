@@ -4,11 +4,9 @@ package CMS::Drupal::Modules::MembershipEntity::Membership;
 
 use strict;
 use warnings;
-use 5.010;
 
 use Moo;
 use Types::Standard qw/ :all /;
-use Data::Dumper;
 
 has mid       => ( is => 'ro', isa => Int, required => 1 );
 has created   => ( is => 'ro', isa => Int, required => 1 );
@@ -28,7 +26,7 @@ sub is_active {
 sub has_renewal {
   my $self = shift;
   $self->{'_has_renewal'} = 0;
-  foreach my $term ( values $self->{'terms'} ) {
+  foreach my $term ( values %{ $self->{'terms'} } ) {
     $self->{'_has_renewal'}++ if ($term->is_future and $term->is_active);
   }
   return $self->{'_has_renewal'};

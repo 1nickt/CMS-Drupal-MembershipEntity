@@ -1,7 +1,6 @@
 #! perl
 use strict;
 use warnings;
-use 5.010;
 
 use Test::More tests => 2;
 use Test::Group;
@@ -22,7 +21,7 @@ subtest '::Membership objects contain ::Term objects', sub {
     my $array = $_;
     my $hashref = $ME->fetch_memberships( $array );
     test 'isa valid Term object for '. @$array .' Memberships' , sub {
-      foreach my $mem ( values $hashref ) {
+      foreach my $mem ( values %{ $hashref } ) {
         foreach my $term ( values %{ $mem->{terms} } ) {
           isa_ok( $term, 'CMS::Drupal::Modules::MembershipEntity::Term',
             'tid => '. $term->{tid} );
