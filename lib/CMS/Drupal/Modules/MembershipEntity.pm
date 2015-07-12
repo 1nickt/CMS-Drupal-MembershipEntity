@@ -6,11 +6,10 @@ package CMS::Drupal::Modules::MembershipEntity;
 use Moo;
 use Types::Standard qw/ :all /;
 use Time::Local;
+use Carp qw/ carp confess /;
+
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 use CMS::Drupal::Modules::MembershipEntity::Term;
-use Data::Dumper;
-use Carp qw/ carp croak confess /;
-use 5.010;
 
 has dbh    => ( is => 'ro', isa => InstanceOf['DBI::db'], required => 1 );
 has prefix => ( is => 'ro', isa => Maybe[StrMatch[ qr/ \w+_ /x ]] );
@@ -33,7 +32,7 @@ sub fetch_memberships {
     for (@$mids) {
       # Let's be real strict about what we try to pass in to the DBMS
       confess "FATAL: Invalid 'mid' (must be all ASCII digits)."
-        unless /^\d+$/a;
+        unless /^[0-9]+$/;
       
       $WHERE = 'WHERE ';
       $WHERE .= "mid = '$_' OR " for @$mids;
@@ -216,14 +215,14 @@ in the Membership Terms section below.
 
 Returns true if the Membership status is active, else returns false.
 
-  say "User $mem->{'uid'} is in good standing" if $mem->is_active;
+  print "User $mem->{'uid'} is in good standing" if $mem->is_active;
 
 =head3 has_renewal
 
 Returns true if the Membership has at least one Term for which
 is_future returns true.
 
- say "User $mem->{'uid'} has already renewed" if $mem->has_renewal;
+ print "User $mem->{'uid'} has already renewed" if $mem->has_renewal;
 
 =head2 Membership Terms
 
@@ -259,7 +258,7 @@ the Term is a renewal, etc.
 Returns true if the Term status is active, else returns false.
 (Note that 'active' does not necessarily mean 'current', see below.)
 
- say "$term->{'tid'} is active" if $term->is_active;
+ print "$term->{'tid'} is active" if $term->is_active;
 
 =head3 is_current
 
@@ -267,20 +266,20 @@ Returns true if the Term is current, meaning that the datetime now
 falls between the start and end of the Term.
 (Note that the Term may be 'current' but not 'active', eg 'pending'.)
 
- say "This is a live one" if $term->is_current;
+ print "This is a live one" if $term->is_current;
 
 =head3 is_future
 
 Returns true if the `start` of the Term is in the future compared to now.
 
- say "$mem->{'uid'} has a prepaid renewal" if $term->is_future;
+ print "$mem->{'uid'} has a prepaid renewal" if $term->is_future;
 
 =head3 was_renewal
 
 Returns true if the Term was a renewal when it was created (as determined
 simply by the fact that there was an earlier one).
 
- say "$mem->{'uid'} is a repeat customer" if $term->was_renewal;
+ print "$mem->{'uid'} is a repeat customer" if $term->was_renewal;
 
 
 =head1 SEE ALSO
