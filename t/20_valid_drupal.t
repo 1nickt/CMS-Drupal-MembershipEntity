@@ -65,7 +65,7 @@ my $skip = 0;
 if ( exists $ENV{'DRUPAL_TEST_CREDS'} ) { 
   %params = ( split ',', $ENV{'DRUPAL_TEST_CREDS'} );
 } else {
-  print qq{ 
+  print  <<EOT;
 
    No database credentials found in ENV. 
    Skipping Drupal database tests.
@@ -75,13 +75,13 @@ if ( exists $ENV{'DRUPAL_TEST_CREDS'} ) {
    documented in the source of this file,
    $me
 
-  };
-                    
+EOT
+
   $skip++;
 }
 
 SKIP: {
-  skip 'No database credentials supplied', 8, if $skip;
+  skip 'No database credentials supplied', 3, if $skip;
 
   my $drupal;
   my $dbh;
