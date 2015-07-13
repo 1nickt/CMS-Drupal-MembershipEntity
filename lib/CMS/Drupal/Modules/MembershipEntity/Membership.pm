@@ -17,11 +17,61 @@ has member_id => ( is => 'ro', isa => Str, required => 1 );
 has type      => ( is => 'ro', isa => Str, required => 1 );
 has terms     => ( is => 'ro', isa => HashRef, required => 1 );
 
+=method is_expired
+
+Returns 1 if the Membership has status of 'expired'. Else returns 0.
+
+=cut
+
+sub is_expired {
+  my $self = shift;
+  $self->{'_is_expired'} = $self->{'status'} eq '0' ? 1 : 0;
+  return $self->{'_is_expired'};
+}
+
+=method is_active
+
+Returns 1 if the Membership has status of 'active'. Else returns 0.
+
+=cut
+
 sub is_active {
   my $self = shift;
   $self->{'_is_active'} = $self->{'status'} eq '1' ? 1 : 0;
   return $self->{'_is_active'};
 }
+
+=method is_cancelled
+
+Returns 1 if the Membership has status of 'cancelled'. Else returns 0.
+
+=cut
+
+sub is_cancelled {
+  my $self = shift;
+  $self->{'_is_cancelled'} = $self->{'status'} eq '2' ? 1 : 0;
+  return $self->{'_is_cancelled'};
+}
+
+=method is_pending
+
+Returns 1 if the Membership has status of 'pending'. Else returns 0.
+
+=cut
+
+sub is_pending {
+  my $self = shift;
+  $self->{'_is_pending'} = $self->{'status'} eq '3' ? 1 : 0;
+  return $self->{'_is_pending'};
+}
+
+=method has_renewal
+
+Returns 1 if the Membership has a renewal Term that has not yet started. This is defined by the value of $term->is_future and $term->is_active both being true for at least one of the Membership's Terms. Else returns 0.
+
+  print "User $mem->{'uid'} has already renewed" if $mem->has_renewal;
+
+=cut
 
 sub has_renewal {
   my $self = shift;
@@ -30,6 +80,22 @@ sub has_renewal {
     $self->{'_has_renewal'}++ if ($term->is_future and $term->is_active);
   }
   return $self->{'_has_renewal'};
+}
+
+=method current_was_renewal
+
+Returns 1 if the current Term belonging to the Membership was a renewal
+(i.e. not the Membership's first ever Term). Else returns 0.
+
+=cut
+
+sub current_was_renewal {
+  my $self = shift;
+  $self->{'_current_was_renewal'} = 0;
+  foreach my $term ( values %{ $self->{'terms'} } ) {
+    $self->{'_current_was_renewal'}++ if ($term->is_current && $term->was_renewal);
+  }
+  return $self->{'_current_was_renewal'};
 }
 
 
@@ -78,18 +144,6 @@ The unique Member ID that Drupal assigns to the Membership. This is separate fro
 The Membership type.
 * B<terms>
 A hashref containing a L<CMS::Drupal::Modules::MembershipEntity::Term|CMS::Drupal::Modules::MembershipEntity::Term> object for each term belonging to the Membership, keyed by the B<tid> (term ID).
-
-=method is_active
-
-Returns 1 if the Membership is active, as defined by the value of the 'status' field in the database record. Else returns 0.
-
-  print "User $mem->{'uid'} is in good standing" if $mem->is_active;
-
-=method has_renewal
-
-Returns 1 if the Membership has a renewal Term that has not yet started. This is defined by the value of $term->is_future and $term->is_active both being true for at least one of the Membership's Terms. Else returns 0.
-
-  print "User $mem->{'uid'} has already renewed" if $mem->has_renewal;
 
 =head1 SEE ALSO
 

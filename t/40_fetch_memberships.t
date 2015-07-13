@@ -8,7 +8,7 @@ use Test::Group;
 
 use CMS::Drupal;
 use CMS::Drupal::Modules::MembershipEntity;
-use CMS::Drupal::Modules::MembershipEntity::Test qw/ build_test_db build_test_data/;
+use CMS::Drupal::Modules::MembershipEntity::Test;
 
 my $drupal = CMS::Drupal->new;
 my $dbh    = build_test_db( $drupal );
