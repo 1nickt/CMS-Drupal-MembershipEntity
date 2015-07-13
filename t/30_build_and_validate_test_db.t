@@ -14,7 +14,7 @@ subtest 'We have all our parts' => sub {
   
   use_ok( 'CMS::Drupal' ) or die;
   use_ok( 'CMS::Drupal::Modules::MembershipEntity' ) or die;
-  use_ok( 'CMS::Drupal::Modules::MembershipEntity::Test', qw( build_and_validate_test_db build_test_data ) );
+  use_ok( 'CMS::Drupal::Modules::MembershipEntity::Test' );
   subtest 'All the data files exist.' => sub {
     plan tests => 4;
 

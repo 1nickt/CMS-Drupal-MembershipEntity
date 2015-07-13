@@ -113,6 +113,8 @@ sub fetch_memberships {
     CMS::Drupal::Modules::MembershipEntity::Membership->new( $temp->{ $mid } );
   }
   
+  $self->{'_memberships'} = $memberships;
+
   return $memberships;
 }
 
@@ -177,6 +179,13 @@ object for each mid in the arrayref.
 
   # Fetch all your Memberships
   my $hashref = $ME->fetch_memberships;
+
+IMPORTANT: If you have bad records in your Drupal database, the module will
+print a warning and skip the record. This happens when there are no Terms
+belonging to the Membership, or when the Term is missing a start date or end
+date. You should immediately normalize your data! This issue will also
+cause installation testing to fail if you have configured your environment
+to test against your real Drupal database.
 
 =head2 Memberships
 
