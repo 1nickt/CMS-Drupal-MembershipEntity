@@ -12,14 +12,13 @@ use Test::Group;
 use CMS::Drupal;
 use CMS::Drupal::Modules::MembershipEntity;
 use CMS::Drupal::Modules::MembershipEntity::Test;
-use lib '/Users/nick/dev/perl_dev/CMS-Drupal-Modules-MembershipEntity/lib';
 
 use CMS::Drupal::Modules::MembershipEntity::Stats { into => 'CMS::Drupal::Modules::MembershipEntity' };
 
 my $drupal = CMS::Drupal->new;
 
 my $dbh    = ( exists $ENV{'DRUPAL_TEST_CREDS'}) ?
-               $drupal->dbh( split(',', $ENV{'DRUPAL_TEST_CREDS'}) ) :
+               $drupal->dbh :
                build_test_db( $drupal );
 
 my $ME     = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
@@ -148,6 +147,9 @@ is( $ME->pct_active_memberships_were_renewal,
     $data{'pct_active_memberships_were_renewal'},
     'Percentage active memberships were renewal' );
 
+END { 
+    delete $ENV{'DRUPAL_IGNORE_TEST_CREDS'};
+}
 
 __END__
 

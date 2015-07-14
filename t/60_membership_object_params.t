@@ -2,6 +2,12 @@
 use strict;
 use warnings;
 
+BEGIN {
+  ## Make sure we don't connect to our real DB if we
+  ## have given the credentials for it
+  $ENV{'DRUPAL_IGNORE_TEST_CREDS'} = 1;
+}
+
 use Test::More tests => 2;
 use Test::Group;
 

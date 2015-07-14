@@ -2,6 +2,12 @@
 use strict;
 use warnings;
 
+BEGIN {
+  ## Make sure we don't connect to our real DB if we
+  ## have given the credentials for it
+  $ENV{'DRUPAL_IGNORE_TEST_CREDS'} = 1;
+}
+
 use open ':std', ':encoding(utf8)';
 use Test::More tests => 1;
 use Test::Group;
@@ -11,7 +17,8 @@ use CMS::Drupal::Modules::MembershipEntity;
 use CMS::Drupal::Modules::MembershipEntity::Test;
 
 my $drupal = CMS::Drupal->new;
-my $dbh    = build_test_db( $drupal );
+my $dbh = build_test_db( $drupal );
+
 my $ME     = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
 
 subtest 'Feed various things to fetch_memberships()', sub {
