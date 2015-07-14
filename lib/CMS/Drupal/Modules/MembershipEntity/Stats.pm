@@ -15,6 +15,7 @@ our @EXPORT = qw/
   pct_active_memberships
   pct_expired_memberships
   pct_active_memberships_were_renewal
+  active_memberships_on_historical_date
 /;
 
 use CMS::Drupal::Modules::MembershipEntity::Membership;
@@ -212,6 +213,61 @@ sub pct_active_memberships_were_renewal {
 
   return $self->{'_pct_active_memberships_were_renewal'};
 }
+
+=method active_memberships_on_historical_date( $string )
+
+Returns the number of Memberships within the set with status of 'active' on a
+given date in history, by comparing the date with the start and end dates
+of the Membership's Terms.
+
+Takes a date-time in the epoch time format of the system. The best way to ensure
+compatibility is to use Time::Local in your script and start with an ANSI-
+standard datetime:
+
+  use Time::Local;
+
+  my $ansi_date = '2001-01-01 00:00:00';
+  my @datetime = reverse ( split /[-| |T|:]/, $ansi_date );
+  $datetime[4]--;
+  my $localtime = timelocal(@datetime);
+
+  $ME->active_memberships_on_historical_date( $locatime );
+
+Returns a scalar value when called with one date.
+
+Can also be called with an arrayref of date-times, in which case it will return a 
+reference to a hash indexed by the same date-time string, using the count for
+the values.
+
+=cut
+
+sub active_memberships_on_historical_date {
+  my $self = shift;
+  my $dates = shift;
+
+  my %active;
+  
+  while ( my ($mid, $mem) = each  %{ $self->{'_memberships'} } ) {
+    while ( my ($tid, $term) = each %{ $mem->{'terms'} } ) {
+      foreach my $date (@{ $dates }) {
+        if ( $term->{'start'} < $date and $term->{'end'} >  $date ) {
+          $active{ $date }->{'mids'}->{ $mid }++;
+        }
+      }
+    }
+  }
+
+  my %dates;
+  foreach my $date ( keys %active ) {
+    $dates{ $date } = scalar keys %{ $active{ $date }->{'mids'} };
+  }
+
+  return (scalar keys %dates == 1) ?
+    $dates{ $dates->[0] } :
+    \%dates;
+
+} # end sub
+
 
 1; ## return true to end package CMS::Drupal::Modules::MembershipEntity
 __END__
