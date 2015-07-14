@@ -6,7 +6,8 @@ package CMS::Drupal::Modules::MembershipEntity;
 use Moo;
 use Types::Standard qw/ :all /;
 use Time::Local;
-use Carp qw/ carp confess /;
+use Carp qw/ carp croak confess /;
+use Data::Dumper;
 
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 use CMS::Drupal::Modules::MembershipEntity::Term;
@@ -17,11 +18,10 @@ has prefix => ( is => 'ro', isa => Maybe[StrMatch[ qr/ \w+_ /x ]] );
 sub fetch_memberships {
 
   my $self = shift;
-  my $prefix = $self->{'prefix'} || '';
 
-  ## We accept an arrayref of mids as an optional parameter
+  ## We accept a list of mids as an optional parameter
+  my $mids = [ @_ ];
 
-  my $mids = shift;
   my $WHERE = ' ';
  
   if ( $mids ) {
@@ -39,7 +39,9 @@ sub fetch_memberships {
       $WHERE =~ s/ OR $//;
     }
   }
-  
+
+  my $prefix = $self->{'prefix'} || '';
+
   my $temp;
   my $memberships;
 
@@ -125,18 +127,18 @@ __END__
 
   use CMS::Drupal::Modules::MembershipEntity;
 
-  my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
+  my $ME = CMS::Drupal::Modules::MembershipEntity->new( { dbh => $dbh } );
 
   my $hashref = $ME->fetch_memberships;
 
   # or:
-  my $hashref = $ME->fetch_memberships([ 123, 456, 789 ]);
+  my $hashref = $ME->fetch_memberships( 123, 456, 789 );
 
   # or:
-  my $hashref = $ME->fetch_memberships([ 123 ]);
+  my $hashref = $ME->fetch_memberships( 123 );
 
   # or:
-  my $hashref = $ME->fetch_memberships( \@list );
+  my $hashref = $ME->fetch_memberships( @list );
  
   foreach my $mid ( sort keys %{$hashref} ) {
     my $mem = $hashref->{ $mid };
@@ -165,17 +167,17 @@ When called with no arguments, the hashref contains all Memberships in the
 Drupal database, which might be too much for your memory if you have lots
 of them.
 
-When called with an arrayref containing B<mid>s, the hashref will contain an 
-object for each mid in the arrayref.
+When called with an array containing B<mid>s, the hashref will contain an 
+object for each mid in the array.
 
   # Fetch a single Membership
-  my $hashref = $ME->fetch_memberships([ 1234 ]); 
+  my $hashref = $ME->fetch_memberships( 1234 ); 
 
   # Fetch a set of Memberships
-  my $hashref = $ME->fetch_memberships([ 1234, 5678 ]);
+  my $hashref = $ME->fetch_memberships( 1234, 5678 );
 
   # Fetch a set of Memberships using a list you prepared elsewhere
-  my $hashref = $ME->fetch_memberships( $array_ref );
+  my $hashref = $ME->fetch_memberships( @list );
 
   # Fetch all your Memberships
   my $hashref = $ME->fetch_memberships;
@@ -193,7 +195,7 @@ This module uses CMS::Drupal::Modules::MembershipEntity::Membership so you
 don't have to. The methods shown below are actually in the latter 
 module where they are documented completely.
 
-  my $hashref = $ME->fetch_memberships([ 1234 ]);
+  my $hashref = $ME->fetch_memberships( 1234 );
   my $mem = $hashref->{'1234'};
   # now you have a Membership object
 

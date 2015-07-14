@@ -19,7 +19,7 @@ subtest 'fetch_memberships() returns ::Membership objects', sub {
   plan tests => 3;
   for ([3694], [3694, 2966], []) {
     my $array = $_;
-    my $hashref = $ME->fetch_memberships( $array );
+    my $hashref = $ME->fetch_memberships( @{ $array } );
     test 'isa valid object for '. @$array .' mids', sub {
       foreach my $mem ( values %{ $hashref } ) {
         isa_ok( $mem, 'CMS::Drupal::Modules::MembershipEntity::Membership' );
