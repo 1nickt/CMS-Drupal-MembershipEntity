@@ -1,5 +1,11 @@
 {{$NEXT}}
 
+Allow use of local Drupal DB in some tests
+
+Take an array as argument to fetch_memberships
+
+0.90      2015-07-14 05:40:04-07:00 America/Los_Angeles
+
 Introduce basic Stats package and tests
 
 0.095     2015-07-12 19:39:22-07:00 America/Los_Angeles

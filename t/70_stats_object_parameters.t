@@ -2,6 +2,12 @@
 use strict;
 use warnings;
 
+BEGIN {
+  ## Make sure we don't connect to our real DB if we
+  ## have given the credentials for it
+  $ENV{'DRUPAL_IGNORE_TEST_CREDS'} = 1;
+}
+
 use Test::More tests => 12;
 
 use CMS::Drupal;
@@ -11,8 +17,6 @@ use CMS::Drupal::Modules::MembershipEntity::Test;
 my $drupal = CMS::Drupal->new;
 my $dbh    = build_test_db( $drupal );
 my $ME     = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
-
-use lib '/Users/nick/dev/perl_dev/CMS-Drupal-Modules-MembershipEntity/lib';
 
 use_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats' );
 can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'new' );

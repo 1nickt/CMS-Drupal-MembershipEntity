@@ -9,6 +9,12 @@ use FindBin;
 use File::Slurp::Tiny qw/ read_file read_lines /;
 use Time::Local;
 
+BEGIN {
+  ## Make sure we don't connect to our real DB if we
+  ## have given the credentials for it
+  $ENV{'DRUPAL_IGNORE_TEST_CREDS'} = 1;
+}
+
 subtest 'We have all our parts' => sub {
   plan tests => 4;
   

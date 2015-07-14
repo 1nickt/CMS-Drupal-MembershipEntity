@@ -236,7 +236,7 @@ module where they are documented compeletely.
     # do something ...
   }
 
-=head2 Attributes
+=head3 Attributes
 
 You can directly access all the Term's attributes as follows:
 
