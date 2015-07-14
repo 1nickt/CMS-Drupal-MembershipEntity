@@ -29,14 +29,18 @@ sub fetch_memberships {
       carp 'Empty arrayref passed to fetch_memberships() ... returning all Memberships';
     }
 
-    for (@$mids) {
-      # Let's be real strict about what we try to pass in to the DBMS
-      confess 'FATAL: Invalid mid (must be all ASCII digits).'
-        unless /^[0-9]+$/;
+    if ( ! grep { /all/ } @{ $mids } ) {
+         # ^ in that case no WHERE clause
+
+      for (@$mids) {
+        # Let's be real strict about what we try to pass in to the DBMS
+        confess 'FATAL: Invalid mid (must be all ASCII digits).'
+          unless /^[0-9]+$/;
       
-      $WHERE = 'WHERE ';
-      $WHERE .= "mid = '$_' OR " for @$mids;
-      $WHERE =~ s/ OR $//;
+        $WHERE = 'WHERE ';
+        $WHERE .= "mid = '$_' OR " for @$mids;
+        $WHERE =~ s/ OR $//;
+      }
     }
   }
 
@@ -129,7 +133,7 @@ __END__
 
   my $ME = CMS::Drupal::Modules::MembershipEntity->new( { dbh => $dbh } );
 
-  my $hashref = $ME->fetch_memberships;
+  my $hashref = $ME->fetch_memberships( 'all' );
 
   # or:
   my $hashref = $ME->fetch_memberships( 123, 456, 789 );
@@ -163,9 +167,9 @@ here.
 
 This method returns a hashref containing Membership objects indexed by B<mid>.
 
-When called with no arguments, the hashref contains all Memberships in the 
-Drupal database, which might be too much for your memory if you have lots
-of them.
+When called with the argument 'all', the hashref contains all Memberships in 
+the Drupal database, which might be too much for your memory if you have 
+lots of them.
 
 When called with an array containing B<mid>s, the hashref will contain an 
 object for each mid in the array.
@@ -180,7 +184,10 @@ object for each mid in the array.
   my $hashref = $ME->fetch_memberships( @list );
 
   # Fetch all your Memberships
-  my $hashref = $ME->fetch_memberships;
+  my $hashref = $ME->fetch_memberships('all');
+
+  # Same thing but with a warning
+  my $hashref = $ME->fetch_memberships();
 
 IMPORTANT: If you have bad records in your Drupal database, the module will
 print a warning and skip the record. This happens when there are no Terms
