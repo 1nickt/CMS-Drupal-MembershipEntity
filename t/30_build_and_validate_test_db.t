@@ -35,7 +35,7 @@ subtest "Create a ::MembershipEntity object and check its methods" => sub {
   plan tests => 3;
   
   can_ok( 'CMS::Drupal::Modules::MembershipEntity', 'new' );
-  $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh);
+  $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
   isa_ok( $ME, 'CMS::Drupal::Modules::MembershipEntity' );
   can_ok( 'CMS::Drupal::Modules::MembershipEntity', 'fetch_memberships' );
 };

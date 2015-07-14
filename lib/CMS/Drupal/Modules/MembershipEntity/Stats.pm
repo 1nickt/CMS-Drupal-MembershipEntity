@@ -1,6 +1,6 @@
 package CMS::Drupal::Modules::MembershipEntity::Stats;
 
-# ABSTRACT: Generate statistics about Drupal MembershipEntity memberships on a Drupal site. 
+# ABSTRACT: Generate statistics about MembershipEntity memberships on a Drupal site. 
 
 use Moo;
 use Types::Standard qw/ :all /;
@@ -218,9 +218,16 @@ __END__
 
 =head1 SYNOPSIS
 
- use CMS::Drupal::Modules::MembershipEntity::Stats;
+  use CMS::Drupal::Modules::MembershipEntity;
+  use CMS::Drupal::Modules::MembershipEntity::Stats { into => 'CMS::Drupal::Modules::MembershipEntity' };
+  
+  my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh ); 
+  $ME->fetch_memberships();
+  
+  print $ME->count_active_memberships;
+  print $ME->pct_active_memberships_were_renewal; 
+ 
+  ...
 
-=head1 USAGE
 
-To come ...
 
