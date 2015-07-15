@@ -15,18 +15,25 @@ our @EXPORT = qw/
   pct_active_memberships
   pct_expired_memberships
   pct_active_memberships_were_renewal
-  active_memberships_on_historical_date
+  count_daily_term_expirations
+  count_daily_term_activations
+  count_daily_new_memberships
+  count_daily_new_terms
+  historical_active_memberships
 /;
+use Time::Local;
+use Time::Piece;
 
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 
 use Data::Dumper;
 use Carp qw/ carp croak confess /;
+use feature qw/ say /;
 
 has dbh    => ( is => 'ro', isa => InstanceOf['DBI::db'], required => 1 );
 has prefix => ( is => 'ro', isa => Maybe[Str] );
 
-=method count_memberships
+=method count_memberships()
 
 Returns the number of Memberships in the set.
 
@@ -43,7 +50,7 @@ sub count_memberships {
   return $self->{'_count_memberships'};
 }
 
-=method count_expired_memberships
+=method count_expired_memberships()
 
 Returns the number of Memberships from the set that have status of 'expired'.
 
@@ -64,7 +71,7 @@ sub count_expired_memberships {
   return $self->{'_count_expired_memberships'};
 }
 
-=method count_active_memberships
+=method count_active_memberships()
 
 Returns the number of Memberships from the set that have status of 'active'.
 
@@ -85,7 +92,7 @@ sub count_active_memberships {
   return $self->{'_count_active_memberships'};
 }
 
-=method count_cancelled_memberships
+=method count_cancelled_memberships()
 
 Returns the number of Memberships from the set that have status of 'cancelled'.
 
@@ -106,7 +113,7 @@ sub count_cancelled_memberships {
   return $self->{'_count_cancelled_memberships'};
 }
 
-=method count_pending_memberships
+=method count_pending_memberships()
 
 Returns the number of Memberships from the set that have status of 'pending'.
 
@@ -127,7 +134,7 @@ sub count_pending_memberships {
   return $self->{'_count_pending_memberships'};
 }
 
-=method count_were_renewal_memberships
+=method count_were_renewal_memberships()
 
 Returns the number of Memberships from the set whose current Term was a renewal.
 
@@ -146,7 +153,7 @@ sub count_were_renewal_memberships {
   return $self->{'_count_were_renewal_memberships'};
 }
 
-=method pct_active_memberships
+=method pct_active_memberships([$precision])
 
 Returns the percentage of all Memberships that currently have status of
 'active'.
@@ -190,7 +197,7 @@ sub pct_expired_memberships {
   return $self->{'_pct_expired_memberships'};
 }
 
-=method pct_active_memberships_were_renewal
+=method pct_active_memberships_were_renewal([$precision])
 
 Returns the percentage of active Memberships for which the current Term was
 not the first Term in the Membership.
@@ -214,57 +221,239 @@ sub pct_active_memberships_were_renewal {
   return $self->{'_pct_active_memberships_were_renewal'};
 }
 
-=method active_memberships_on_historical_date( $string )
+=method count_daily_term_expirations( @list_of_dates )
 
-Returns the number of Memberships within the set with status of 'active' on a
-given date in history, by comparing the date with the start and end dates
-of the Membership's Terms.
+Returns the number of Membership Terms belonging to Members
+in the set that expired in the 24-hour period beginning with
+the date supplied. Takes dates in ISO-ish format.
 
-Takes a date-time in the epoch time format of the system. The best way to ensure
-compatibility is to use Time::Local in your script and start with an ANSI-
-standard datetime:
+Returns a scalar when called with one date.
 
-  use Time::Local;
-
-  my $ansi_date = '2001-01-01 00:00:00';
-  my @datetime = reverse ( split /[-| |T|:]/, $ansi_date );
-  $datetime[4]--;
-  my $localtime = timelocal(@datetime);
-
-  $ME->active_memberships_on_historical_date( $locatime );
-
-Returns a scalar value when called with one date.
-
-Can also be called with an arrayref of date-times, in which case it will return a 
+Can also be called with an array of date-times, in which case it will return a
 reference to a hash indexed by the same date-time string, using the count for
 the values.
 
 =cut
 
-sub active_memberships_on_historical_date {
+sub count_daily_term_expirations {
   my $self = shift;
-  my $dates = shift;
+  my @dates = @_;
+  my %counts;
 
-  my %active;
+  my $sql = qq/
+    SELECT COUNT(DISTINCT mid)
+    FROM membership_entity_term
+    WHERE end >= ?
+    AND end < ?
+    AND status NOT IN (2,3)
+  /;
   
-  while ( my ($mid, $mem) = each  %{ $self->{'_memberships'} } ) {
-    while ( my ($tid, $term) = each %{ $mem->{'terms'} } ) {
-      foreach my $date (@{ $dates }) {
-        if ( $term->{'start'} < $date and $term->{'end'} >  $date ) {
-          $active{ $date }->{'mids'}->{ $mid }++;
-        }
-      }
-    }
+  my $sth = $self->{'dbh'}->prepare( $sql );
+
+  foreach my $datetime (@dates) {
+
+    my @dateparts = reverse (split /[-| |T|:]/, $datetime); 
+    $dateparts[4]--;
+    my $time = timelocal( @dateparts );
+    $time += (24*3600);
+    my $plus_one = localtime($time);
+
+    $sth->execute( $datetime, $plus_one->datetime );
+    $counts{ $datetime } = $sth->fetchrow_array;
+  } 
+
+  return (scalar keys %counts == 1) ?
+              $counts{ $dates[0] } :
+              \%counts;
+  
+} # end sub
+
+=method count_daily_term_activations( @list_of_dates )
+
+Returns the number of Membership Terms belonging to Members
+in the set that began in the 24-hour period beginning with
+the date supplied. Takes dates in ISO-ish format.
+
+Returns a scalar when called with one date.
+
+Can also be called with an array of date-times, in which case it will return a
+reference to a hash indexed by the same date-time string, using the count for
+the values.
+
+=cut
+
+sub count_daily_term_activations {
+  my $self = shift;
+  my @dates = @_; 
+  my %counts;
+
+  my $sql = qq/ 
+    SELECT COUNT(DISTINCT mid)
+    FROM membership_entity_term
+    WHERE start >= ?
+    AND start < ?
+    AND status NOT IN (2,3)
+  /;
+  
+  my $sth = $self->{'dbh'}->prepare( $sql );
+
+  foreach my $datetime (@dates) {
+
+    my @dateparts = reverse (split /[-| |T|:]/, $datetime); 
+    $dateparts[4]--;
+    my $time = timelocal( @dateparts );
+    $time += (24*3600);
+    my $plus_one = localtime($time);
+
+    $sth->execute( $datetime, $plus_one->datetime );
+    $counts{ $datetime } = $sth->fetchrow_array;
+  }   
+
+  return (scalar keys %counts == 1) ?
+              $counts{ $dates[0] } : 
+              \%counts;
+  
+} # end sub
+
+=method count_daily_new_memberships( @list_of_dates )
+
+Returns the number of Memberships in the set that were
+created in the 24-hour period beginning with
+the date supplied. Takes dates in ISO-ish format.
+
+Returns a scalar when called with one date.
+
+Can also be called with an array of date-times, in which case it will return a
+reference to a hash indexed by the same date-time string, using the count for
+the values.
+
+=cut
+
+sub count_daily_new_memberships {
+  my $self = shift;
+  my @dates = @_;
+  my %counts;
+
+  my $sql = qq/ 
+    SELECT COUNT(DISTINCT mid)
+    FROM membership_entity
+    WHERE created >= ?
+    AND created < ?
+    AND status NOT IN (3)
+  /;
+
+  my $sth = $self->{'dbh'}->prepare( $sql );
+
+  foreach my $datetime (@dates) {
+
+    my @dateparts = reverse (split /[-| |T|:]/, $datetime);
+    $dateparts[4]--;
+    my $time = timelocal( @dateparts );
+    my $plus_one = ($time + (24*3600));
+    $sth->execute( $time, $plus_one );
+    $counts{ $datetime } = $sth->fetchrow_array;
   }
 
-  my %dates;
-  foreach my $date ( keys %active ) {
-    $dates{ $date } = scalar keys %{ $active{ $date }->{'mids'} };
+  return (scalar keys %counts == 1) ?
+              $counts{ $dates[0] } :
+              \%counts;
+
+} # end sub
+
+=method count_daily_new_terms( @list_of_dates )
+
+Returns the number of Terms (belonging to Memberships
+in the set) that were created in the 24-hour 
+period beginning with the date supplied. Takes dates
+in ISO-ish format.
+
+Returns a scalar when called with one date.
+
+Can also be called with an array of date-times, in which case it will return a
+reference to a hash indexed by the same date-time string, using the count for
+the values.
+
+=cut
+
+sub count_daily_new_terms {
+  my $self = shift;
+  my @dates = @_;
+  my %counts;
+
+  my $sql = qq/ 
+    SELECT COUNT(DISTINCT mid)
+    FROM membership_entity_term
+    WHERE created >= ?
+    AND created < ?
+    AND status NOT IN (3)
+  /;
+
+  my $sth = $self->{'dbh'}->prepare( $sql );
+
+  foreach my $datetime (@dates) {
+
+    my @dateparts = reverse (split /[-| |T|:]/, $datetime);
+    $dateparts[4]--;
+    my $time = timelocal( @dateparts );
+    my $plus_one = ($time + (24*3600));
+    $sth->execute( $time, $plus_one );
+    $counts{ $datetime } = $sth->fetchrow_array;
   }
 
-  return (scalar keys %dates == 1) ?
-    $dates{ $dates->[0] } :
-    \%dates;
+  return (scalar keys %counts == 1) ?
+              $counts{ $dates[0] } :
+              \%counts;
+
+} # end sub
+
+
+=method historical_active_memberships( @list_of_dates )
+
+Returns the number of Memberships within the set with status of 'active' on a
+given date in history, by comparing the date with the start and end dates
+of the Membership's Terms.
+
+Takes a date-time or a range of date-times in the ISO-ish format
+yyyy-dd-mmThh:mm:ss, such as 2001-01-01T12:00:00  
+
+Returns a scalar value when called with one date.
+
+Can also be called with an array of date-times, in which case it will return a 
+reference to a hash indexed by the same date-time string, using the count for
+the values.
+
+If you are forensically building a record of your Memberships, you should probably
+set the time element of your date(s) to 00:00:00, since the search looks for Terms
+with a start date <= and an end date > the date given and this strategy will give
+a daily report that is closest to the historical truth.
+
+Note that this report may not be 100% accurate, as data in the DB may have changed
+since a given date, particularly the status of Terms. 
+
+=cut
+
+sub historical_active_memberships {
+  my $self = shift;
+  my @dates = @_;
+  my %counts;
+
+  my $sql = qq/
+    SELECT COUNT(DISTINCT mid)
+    FROM membership_entity_term
+    WHERE start <= ? AND end > ?
+    AND status NOT IN (2,3)
+  /;
+
+  my $sth = $self->{'dbh'}->prepare( $sql );
+
+  foreach my $date (@dates) {
+    $sth->execute( $date, $date );
+    $counts{ $date } = $sth->fetchrow_array;
+  }
+
+  return (scalar keys %counts == 1) ?
+           $counts{ $dates[0] } :
+           \%counts;
 
 } # end sub
 
@@ -285,5 +474,13 @@ __END__
  
   ...
 
+=head1 DESCRIPTION
 
+This module provides some basic statistical analysis about your Drupal
+site Memberships. It operates on the set of Memberships contained in 
+$ME->{'_memberships'} in other words whichever ones you fetched with
+your call to $ME->fetch_memberships().
 
+It has some methods for doing retroactive reporting on the DB records
+so you can initialize a reporting system with some statistical
+baselines. 
