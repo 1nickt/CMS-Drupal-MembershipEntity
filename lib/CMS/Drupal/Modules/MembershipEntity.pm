@@ -8,7 +8,7 @@ use Types::Standard qw/ :all /;
 use Time::Local;
 use Carp qw/ carp croak confess /;
 use Data::Dumper;
-
+use feature qw/ say /;
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 use CMS::Drupal::Modules::MembershipEntity::Term;
 
@@ -79,11 +79,21 @@ sub fetch_memberships {
   my %term_count; # used to track array position of Terms
 
   while( my $row = $sth2->fetchrow_hashref ) {
-    ## Shouldn't be, but is, possible to have a Term with no start or end
+    
+    ## Shouldn't be, but is, possible to have a Term with no
+    ## start or end date
     if ( not defined $row->{'start'} or not defined $row->{'end'} ) {
       carp "MISSING DATE: tid< $row->{'tid'} > " .
            "(uid< $temp->{ $row->{'mid'} }->{'uid'} >) has no start " .
            "or end date defined. Skipping ...";
+      next;
+    }
+
+    ## Shouldn't be, but is, possible to have a Term with no
+    ## corresponding Memberships
+    if ( not defined $temp->{ $row->{'mid'} } ) {
+      carp "TERM WITH NO MEMBERSHIP: tid< $row->{'tid'} > " .
+           "has no corresponding Membership. Skipping ...";
       next;
     }
 
@@ -114,7 +124,7 @@ sub fetch_memberships {
            "has no Membership Terms. Skipping ...";
       next;
     }
-    
+
     $memberships->{ $mid } =
     CMS::Drupal::Modules::MembershipEntity::Membership->new( $temp->{ $mid } );
   }
