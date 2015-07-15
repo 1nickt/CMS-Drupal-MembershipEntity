@@ -28,7 +28,7 @@ use CMS::Drupal::Modules::MembershipEntity::Membership;
 
 use Data::Dumper;
 use Carp qw/ carp croak confess /;
-use feature qw/ say /;
+# use feature qw/ say /;
 
 has dbh    => ( is => 'ro', isa => InstanceOf['DBI::db'], required => 1 );
 has prefix => ( is => 'ro', isa => Maybe[Str] );
