@@ -1,10 +1,6 @@
 #! perl
 use strict;
 use warnings;
-use 5.010;
-
-use Carp qw/ carp croak confess /;
-use Data::Dumper;
 
 use Test::More tests => 9;
 use Test::Group;
@@ -146,10 +142,6 @@ is( $ME->pct_expired_memberships,
 is( $ME->pct_active_memberships_were_renewal,
     $data{'pct_active_memberships_were_renewal'},
     'Percentage active memberships were renewal' );
-
-END { 
-    delete $ENV{'DRUPAL_IGNORE_TEST_CREDS'};
-}
 
 __END__
 

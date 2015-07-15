@@ -6,9 +6,7 @@ package CMS::Drupal::Modules::MembershipEntity;
 use Moo;
 use Types::Standard qw/ :all /;
 use Time::Local;
-use Carp qw/ carp croak confess /;
-use Data::Dumper;
-use feature qw/ say /;
+
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 use CMS::Drupal::Modules::MembershipEntity::Term;
 
