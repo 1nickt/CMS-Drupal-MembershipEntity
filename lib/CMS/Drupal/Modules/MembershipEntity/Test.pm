@@ -147,9 +147,9 @@ sub build_test_db {
 
 sub build_test_data {
 
-  my $mids = shift;
+  my @mids = @_;
   my %include;
-  for( @$mids ) {
+  for( @mids ) {
     $include{ $_ }++;
   }
  
@@ -158,7 +158,7 @@ sub build_test_data {
 
   for ( read_lines("$FindBin::Bin/data/test_memberships.dat", chomp => 1) ) {
     my @fields = split(',');
-    if (scalar @$mids > 0) { next unless exists $include{ $fields[0] }; }
+    if (scalar @mids > 0) { next unless exists $include{ $fields[0] }; }
     $membs{ $fields[0] } = { 'mid'       => $fields[0],
                              'member_id' => $fields[1],
                              'type'      => $fields[2],
@@ -172,7 +172,7 @@ sub build_test_data {
 
   for ( read_lines("$FindBin::Bin/data/test_terms.dat", chomp => 1) ) {
     my @fields = split(',');
-    if (scalar @$mids > 0) { next unless exists $include{ $fields[1] } };
+    if (scalar @mids > 0) { next unless exists $include{ $fields[1] } };
     $term_count{ $fields[1] }++;
     for (5..6) {
       my @datetime = reverse (split /[-| |:]/, $fields[ $_ ]);
@@ -222,8 +222,8 @@ __END__
 
   # or:
  
-  my $hashref = $ME->fetch_memberships([ 1234, 5678 ]);
-  my $cmp_data = build_test_data([ 1234, 5678 ]);
+  my $hashref = $ME->fetch_memberships('1234', '5678');
+  my $cmp_data = build_test_data('1234', '5678');
 
   is_deeply($hashref, $cmp_data, 'Data matches'); 
 
@@ -268,7 +268,7 @@ The method takes an optional single argument, which is an arrayref containing a 
 Only the Memberships associated with the B<mid>s provided will; be included in the data
 returned.
 
-  $cmp_data = build_test_data( [ 1234, 5678 ] );
+  $cmp_data = build_test_data('1234', '5678');
 
 The data structure is a hashref of hashrefs (Membership objects, indexed by mid, containing
 among their attributes an array of hashrefs (Membership Term objects) ...
