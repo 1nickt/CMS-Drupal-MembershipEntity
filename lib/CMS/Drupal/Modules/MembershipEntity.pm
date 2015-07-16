@@ -6,6 +6,7 @@ package CMS::Drupal::Modules::MembershipEntity;
 use Moo;
 use Types::Standard qw/ :all /;
 use Time::Local;
+use Carp qw/ carp croak /;
 
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 use CMS::Drupal::Modules::MembershipEntity::Term;
@@ -18,25 +19,25 @@ sub fetch_memberships {
   my $self = shift;
 
   ## We accept a list of mids as an optional parameter
-  my $mids = [ @_ ];
+  my @mids = @_;
 
   my $WHERE = ' ';
  
-  if ( $mids ) {
-    if ( scalar @{ $mids } < 1 ) {
-      carp 'Empty arrayref passed to fetch_memberships() ... returning all Memberships';
+  if ( @mids ) {
+    if ( scalar @mids < 1 ) {
+      carp 'Empty array passed to fetch_memberships() ... returning all Memberships';
     }
 
-    if ( ! grep { /all/ } @{ $mids } ) {
+    if ( ! grep { /all/ } @mids ) {
          # ^ in that case no WHERE clause
 
-      for (@$mids) {
+      for (@mids) {
         # Let's be real strict about what we try to pass in to the DBMS
-        confess 'FATAL: Invalid mid (must be all ASCII digits).'
+        croak 'FATAL: Invalid mid (must be all ASCII digits).'
           unless /^[0-9]+$/;
       
         $WHERE = 'WHERE ';
-        $WHERE .= "mid = '$_' OR " for @$mids;
+        $WHERE .= "mid = '$_' OR " for @mids;
         $WHERE =~ s/ OR $//;
       }
     }
