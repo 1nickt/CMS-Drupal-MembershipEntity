@@ -6,20 +6,18 @@ use Moo;
 use Types::Standard qw/ :all /;
 use base 'Exporter::Tiny'; 
 our @EXPORT = qw/
-  count_memberships
+  count_all_memberships
   count_expired_memberships
   count_active_memberships
   count_cancelled_memberships
   count_pending_memberships
-  count_were_renewal_memberships
-  pct_active_memberships
-  pct_expired_memberships
-  pct_active_memberships_were_renewal
+  count_set_were_renewal_memberships
   count_daily_term_expirations
   count_daily_term_activations
   count_daily_new_memberships
   count_daily_new_terms
-  historical_active_memberships
+  count_daily_active_memberships
+  build_date_range
 /;
 use Time::Local;
 use Time::Piece;
@@ -27,27 +25,27 @@ use Time::Piece;
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 
 use Data::Dumper;
-use Carp qw/ carp croak confess /;
+use Carp qw/ carp croak /;
 # use feature qw/ say /;
 
 has dbh    => ( is => 'ro', isa => InstanceOf['DBI::db'], required => 1 );
 has prefix => ( is => 'ro', isa => Maybe[Str] );
 
-=method count_memberships()
+=method count_all_memberships()
 
 Returns the number of Memberships in the set.
 
 =cut
 
-sub count_memberships {
+sub count_all_memberships {
   my $self = shift;
   if ($self->{'_memberships'}) {
-    $self->{'_count_memberships'} = scalar keys %{$self->{'_memberships'}};
+    $self->{'stats'}->{'_count_all_memberships'} = scalar keys %{$self->{'_memberships'}};
   } else {
     my $sql = q{ SELECT COUNT(mid) FROM membership_entity };
-    $self->{'_count_memberships'} = $self->{'dbh'}->selectrow_array($sql);
+    $self->{'stats'}->{'_count_all_memberships'} = $self->{'dbh'}->selectrow_array($sql);
   }
-  return $self->{'_count_memberships'};
+  return $self->{'stats'}->{'_count_all_memberships'};
 }
 
 =method count_expired_memberships()
@@ -134,91 +132,35 @@ sub count_pending_memberships {
   return $self->{'_count_pending_memberships'};
 }
 
-=method count_were_renewal_memberships()
+=method count_set_were_renewal_memberships()
 
 Returns the number of Memberships from the set whose current Term was a renewal.
 
+Dies if $ME->{'_memberships'} is not defined.
+
 =cut
 
-sub count_were_renewal_memberships {
+sub count_set_were_renewal_memberships {
+  my %fake;
   my $self = shift;
   if ($self->{'_memberships'}) {
-    $self->{'_count_were_renewal_memberships'} = ();
+    $self->{'_count_were_renewal_memberships'} = 0;
     while ( my ($mid, $mem) = each %{$self->{'_memberships'}} ) {
       if ( $mem->current_was_renewal ) {
+        $fake{$mem->{mid}} = 1;
         $self->{'_count_were_renewal_memberships'}++;
       }
     }
+  } else {
+    croak qq/
+      Died.
+      count_were_renewal_memberships() must be called with a set of
+      Memberships. You probably forgot to call fetch_memberships()
+      on your MembershipEntity object before calling this method.
+    /;
   }
-  return $self->{'_count_were_renewal_memberships'};
-}
-
-=method pct_active_memberships([$precision])
-
-Returns the percentage of all Memberships that currently have status of
-'active'.
-
-Accepts an integer value representing floating point precision as the single
-parameter; this parameter is optional and defaults to 2.
-
-  $ME->pct_active_memberships(4); # returns like 99.9999
-  $ME->pct_active_memberships;    # returns like 99.99
-
-=cut
-
-sub pct_active_memberships {
-  my $self = shift;
-  my $precision = shift || 2;
-  $self->{'_pct_active_memberships'} =
-    sprintf("%.${precision}f", (100 *
-    ($self->count_active_memberships / $self->count_memberships)));
-  return $self->{'_pct_active_memberships'};
-}
-
-=method pct_expired_memberships
-
-Returns the percentage of all Memberships that currently have status of
-'expired'.
-
-Accepts an integer value representing floating point precision as the single
-parameter; this parameter is optional and defaults to 2.
-
-  $ME->pct_expired_memberships(4); # returns like 99.9999
-  $ME->pct_expired_memberships;    # returns like 99.99
-
-=cut
-
-sub pct_expired_memberships {
-  my $self = shift;
-  my $precision = shift || 2;
-  $self->{'_pct_expired_memberships'} =
-    sprintf("%.${precision}f", (100 *
-    ($self->count_expired_memberships / $self->count_memberships)));
-  return $self->{'_pct_expired_memberships'};
-}
-
-=method pct_active_memberships_were_renewal([$precision])
-
-Returns the percentage of active Memberships for which the current Term was
-not the first Term in the Membership.
-
-Accepts an integer value representing floating point precision as the single
-parameter; this parameter is optional and defaults to 2.
-
-  $ME->pct_active_memberships_were_renewal(4); # returns like 99.9999
-  $ME->pct_active_memberships_were_renewal;    # returns like 99.99
-
-=cut
-
-sub pct_active_memberships_were_renewal {
-  my $self = shift;
-  my $precision = shift || 2;
-  
-  $self->{'_pct_active_memberships_were_renewal'} =
-    sprintf("%.${precision}f", (100 *
-    ($self->count_were_renewal_memberships / $self->count_active_memberships)));
-
-  return $self->{'_pct_active_memberships_were_renewal'};
+  return \%fake;
+  #return $self->{'_count_were_renewal_memberships'};
 }
 
 =method count_daily_term_expirations( @list_of_dates )
@@ -227,11 +169,8 @@ Returns the number of Membership Terms belonging to Members
 in the set that expired in the 24-hour period beginning with
 the date supplied. Takes dates in ISO-ish format.
 
-Returns a scalar when called with one date.
-
-Can also be called with an array of date-times, in which case it will return a
-reference to a hash indexed by the same date-time string, using the count for
-the values.
+Returns a scalar when called with one date, or a hashref of counts
+indexed by dates, if called with an array of date-times.
 
 =cut
 
@@ -270,15 +209,12 @@ sub count_daily_term_expirations {
 
 =method count_daily_term_activations( @list_of_dates )
 
-Returns the number of Membership Terms belonging to Members
-in the set that began in the 24-hour period beginning with
-the date supplied. Takes dates in ISO-ish format.
+Returns the number of Membership Terms belonging to Members in the
+set that began in the 24-hour period beginning with the date
+supplied. Takes dates in ISO-ish format.
 
-Returns a scalar when called with one date.
-
-Can also be called with an array of date-times, in which case it will return a
-reference to a hash indexed by the same date-time string, using the count for
-the values.
+Returns a scalar value when called with one date, or a hashref of
+counts indexed by dates, if called with an array of date-times.
 
 =cut
 
@@ -317,15 +253,12 @@ sub count_daily_term_activations {
 
 =method count_daily_new_memberships( @list_of_dates )
 
-Returns the number of Memberships in the set that were
-created in the 24-hour period beginning with
-the date supplied. Takes dates in ISO-ish format.
+Returns the number of Memberships in the set that were created in the
+24-hour period beginning with the date supplied. Takes dates in ISO-ish
+format.
 
-Returns a scalar when called with one date.
-
-Can also be called with an array of date-times, in which case it will return a
-reference to a hash indexed by the same date-time string, using the count for
-the values.
+Returns a scalar value when called with one date, or a hashref of
+counts indexed by dates, if called with an array of date-times.
 
 =cut
 
@@ -362,16 +295,12 @@ sub count_daily_new_memberships {
 
 =method count_daily_new_terms( @list_of_dates )
 
-Returns the number of Terms (belonging to Memberships
-in the set) that were created in the 24-hour 
-period beginning with the date supplied. Takes dates
-in ISO-ish format.
+Returns the number of Terms (belonging to Memberships in the set)
+that were created in the 24-hour period beginning with the date
+supplied.
 
-Returns a scalar when called with one date.
-
-Can also be called with an array of date-times, in which case it will return a
-reference to a hash indexed by the same date-time string, using the count for
-the values.
+Returns a scalar value when called with one date, or a hashref of
+counts indexed by dates, if called with an array of date-times.
 
 =cut
 
@@ -407,32 +336,22 @@ sub count_daily_new_terms {
 } # end sub
 
 
-=method historical_active_memberships( @list_of_dates )
+=method count_daily_active_memberships( @list_of_dates )
 
-Returns the number of Memberships within the set with status of 'active' on a
-given date in history, by comparing the date with the start and end dates
-of the Membership's Terms.
+Returns the number of Memberships within the set with status of
+'active' on a given date, or range of dates. Takes a date-time
+or a range of date-times in ISO-ish format.
 
-Takes a date-time or a range of date-times in the ISO-ish format
-yyyy-dd-mmThh:mm:ss, such as 2001-01-01T12:00:00  
+Returns a scalar value when called with one date, or a hashref of
+counts indexed by dates, if called with an array of date-times.
 
-Returns a scalar value when called with one date.
-
-Can also be called with an array of date-times, in which case it will return a 
-reference to a hash indexed by the same date-time string, using the count for
-the values.
-
-If you are forensically building a record of your Memberships, you should probably
-set the time element of your date(s) to 00:00:00, since the search looks for Terms
-with a start date <= and an end date > the date given and this strategy will give
-a daily report that is closest to the historical truth.
-
-Note that this report may not be 100% accurate, as data in the DB may have changed
-since a given date, particularly the status of Terms. 
+Note that this report may not be 100% accurate, as data in the DB
+may have changed since a given date,particularly the status
+of Terms.
 
 =cut
 
-sub historical_active_memberships {
+sub count_daily_active_memberships {
   my $self = shift;
   my @dates = @_;
   my %counts;
@@ -454,6 +373,56 @@ sub historical_active_memberships {
   return (scalar keys %counts == 1) ?
            $counts{ $dates[0] } :
            \%counts;
+
+} # end sub
+
+=method build_date_range
+
+Builds a range of dates in ISO 8601 format. Takes dates in YYYY-MM-DD
+format. First date is the earliest date in the range. Second date is
+the latest date in the range: if omitted, this defaults to today's
+date. Returns and array of datetime strings.
+
+=cut
+
+sub build_date_range {
+
+  my $self  = shift;
+  my $start = shift;
+  my $end   = shift;
+  
+  my @start = reverse (split /-/, $start);
+  $start[1]--;
+  unshift @start, 00, 00, 00; 
+  
+  my @end;
+  if ($end) {
+    @end = reverse (split /-/, $end);
+    $end[1]--;
+    unshift @end, 00, 00, 00; 
+  } else {
+    my $t = localtime;
+    @end = ('00', '00', '00', $t->mday, $t->_mon, $t->year);
+  }
+  
+  my $now = timelocal( @end );
+  my $then = timelocal( @start );
+
+  my @dates;
+
+  while ($then <= $now) {
+    my $t   = localtime( $then );
+
+    #    if ( $t->isdst ) { 
+    #  $t -= 3600;
+    #}   
+
+    push @dates, $t->datetime;
+
+    $then += 86400;
+  }
+
+  return @dates;
 
 } # end sub
 
@@ -484,3 +453,7 @@ your call to $ME->fetch_memberships().
 It has some methods for doing retroactive reporting on the DB records
 so you can initialize a reporting system with some statistical
 baselines. 
+
+See L<CMS::Drupal::Modules::MembershipEntity::Cookbook|the Cookbook>
+for more information and examples of usage.
+
