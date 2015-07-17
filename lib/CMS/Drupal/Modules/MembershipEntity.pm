@@ -145,9 +145,6 @@ __END__
   my $hashref = $ME->fetch_memberships( 'all' );
 
   # or:
-  my $hashref = $ME->fetch_memberships( 123, 456, 789 );
-
-  # or:
   my $hashref = $ME->fetch_memberships( 123 );
 
   # or:
