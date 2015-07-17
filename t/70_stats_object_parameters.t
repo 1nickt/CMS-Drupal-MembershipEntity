@@ -23,7 +23,7 @@ can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'new' );
 my $Stats = CMS::Drupal::Modules::MembershipEntity::Stats->new( dbh => $dbh );
 isa_ok( $Stats, 'CMS::Drupal::Modules::MembershipEntity::Stats' );
 
-can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_all_memberships');
+can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_total_memberships');
 can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_expired_memberships');
 can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_active_memberships');
 can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_cancelled_memberships');
@@ -33,7 +33,7 @@ can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_daily_term_expir
 can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_daily_term_activations');
 can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_daily_new_memberships');
 can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_daily_new_terms');
-can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'historical_active_memberships');
+can_ok( 'CMS::Drupal::Modules::MembershipEntity::Stats', 'count_daily_active_memberships');
 
 __END__
 

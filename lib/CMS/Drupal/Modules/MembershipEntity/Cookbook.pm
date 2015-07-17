@@ -183,13 +183,12 @@ indexed by a date.
 
 Working with dates can be cumbersome, and typing them manually is
 prone to errors. The Stats.pm module provides a method to build an
-array of datetime strings that you can pass to its other methods.a
+array of datetime strings that you can pass to its other methods.
 
 You call it with either one or two dates: the first is required
 and is the start date in the range. The second argument, if provided,
 is used for the end date in the range. If no end date is provided,
-the module will use today's date. Times are set to 00:00:00 and 
-daylight savings time adjustments are clobbered, for now.
+the module will use today's date. Times are set to 00:00:00.
 
   my @dates = $ME->build_date_range('2014-01-01','2014-12-31');
   # one year's worth of dates
@@ -202,51 +201,48 @@ daylight savings time adjustments are clobbered, for now.
 Here's an example of a simple program that reports the previous
 week's statistics.
 
-   1 #! perl -w
-   2 use strict;
-   3 use Time::Local;
-   4 use Time::Piece;
-   5 
-   6 use CMS::Drupal;
-   7 use CMS::Drupal::Modules::MembershipEntity;
-   8 use CMS::Drupal::Modules::MembershipEntity::Stats
-   9       { into => 'CMS::Drupal::Modules::MembershipEntity' };
-  10       
-  11 my $drupal = CMS::Drupal->new;
-  12 my $dbh    = $drupal->dbh;
-  13 my $ME = CMS::Drupal::Modules::MembershipEntity->new({dbh => $dbh});
-  14         
-  15 my $now  = localtime;
-  16 my $day  = $now - (86400*7);
-  17 my @days = $ME->build_date_range(join '-', 
-  18                                   $day->year,
-  19                                   $day->mon,
-  20                                   $day->mday );
-  21                                   
-  22 my $report = <<EOT;
-  23 MembershipEntity Report
-  24 ---------------------------
-  25 Date        Exp New Active
-  26 ---------------------------
-  27 EOT
-  28 
-  29 my $exp = $ME->count_daily_term_expirations( @days );
-  30 my $new = $ME->count_daily_new_terms( @days );
-  31 my $act = $ME->count_daily_active_memberships( @days );
-  32 
-  33 foreach my $date ( @days ) {
-  34   my @line = substr $date, 0, 10;
-  35   for ( $exp, $new, $act ) {
-  36     push @line, $_->{ $date };
-  37   } 
-  38   $report .= (join ' | ', @line) . "\n";
-  39 } 
-  40 $report .= '-' x 25 . "\n";
-  41 
-  42 print $report;
-  43 
-  44 __END__
- 
+  #! perl -w
+  use strict;
+  use DateTime;
+  use CMS::Drupal;
+  use CMS::Drupal::Modules::MembershipEntity;
+  use CMS::Drupal::Modules::MembershipEntity::Stats
+        { into => 'CMS::Drupal::Modules::MembershipEntity' };
+
+  my $drupal = CMS::Drupal->new;
+  my $dbh    = $drupal->dbh;
+  my $ME = CMS::Drupal::Modules::MembershipEntity->new({dbh => $dbh});
+
+  my $today      = DateTime->now()->set_time_zone('UTC');
+  my $a_week_ago = $today->subtract( days => 6 )->ymd();
+                   # 6 days because the set includes today
+
+  my @days = @{ $ME->build_date_range( $a_week_ago ) };
+
+  my $report = <<EOT;
+  MembershipEntity Report
+  ---------------------------
+  Date        Exp New Active
+  ---------------------------
+  EOT
+
+  my $exp = $ME->count_daily_term_expirations( @days );
+  my $new = $ME->count_daily_new_terms( @days );
+  my $act = $ME->count_daily_active_memberships( @days );
+
+  foreach my $date ( @days ) { 
+    my @line = substr $date, 0, 10;  
+    for ( $exp, $new, $act ) { 
+      push @line, $_->{ $date };
+    }
+    $report .= (join ' | ', @line) . "\n";
+  }
+  $report .= '-' x 25 . "\n";
+  
+  print $report;
+
+  __END__
+
 This program outputs something like:
 
   MembershipEntity Report

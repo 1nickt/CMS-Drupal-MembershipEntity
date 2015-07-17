@@ -6,21 +6,25 @@ use Moo;
 use Types::Standard qw/ :all /;
 use base 'Exporter::Tiny'; 
 our @EXPORT = qw/
-  count_all_memberships
+  count_total_memberships
   count_expired_memberships
   count_active_memberships
   count_cancelled_memberships
   count_pending_memberships
   count_set_were_renewal_memberships
+  count_daily_total_memberships
   count_daily_term_expirations
   count_daily_term_activations
   count_daily_new_memberships
   count_daily_new_terms
   count_daily_active_memberships
   build_date_range
+  time_plus_one_day
+  datetime_plus_one_day
 /;
+
 use Time::Local;
-use Time::Piece;
+use DateTime::Event::Recurrence;
 
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 
@@ -31,24 +35,24 @@ use Carp qw/ carp croak /;
 has dbh    => ( is => 'ro', isa => InstanceOf['DBI::db'], required => 1 );
 has prefix => ( is => 'ro', isa => Maybe[Str] );
 
-=method count_all_memberships()
+=method count_total_memberships( )
 
 Returns the number of Memberships in the set.
 
 =cut
 
-sub count_all_memberships {
+sub count_total_memberships {
   my $self = shift;
   if ($self->{'_memberships'}) {
-    $self->{'stats'}->{'_count_all_memberships'} = scalar keys %{$self->{'_memberships'}};
+    $self->{'stats'}->{'_count_total_memberships'} = scalar keys %{$self->{'_memberships'}};
   } else {
     my $sql = q{ SELECT COUNT(mid) FROM membership_entity };
-    $self->{'stats'}->{'_count_all_memberships'} = $self->{'dbh'}->selectrow_array($sql);
+    $self->{'stats'}->{'_count_total_memberships'} = $self->{'dbh'}->selectrow_array($sql);
   }
-  return $self->{'stats'}->{'_count_all_memberships'};
+  return $self->{'stats'}->{'_count_total_memberships'};
 }
 
-=method count_expired_memberships()
+=method count_expired_memberships( )
 
 Returns the number of Memberships from the set that have status of 'expired'.
 
@@ -69,7 +73,7 @@ sub count_expired_memberships {
   return $self->{'_count_expired_memberships'};
 }
 
-=method count_active_memberships()
+=method count_active_memberships( )
 
 Returns the number of Memberships from the set that have status of 'active'.
 
@@ -90,7 +94,7 @@ sub count_active_memberships {
   return $self->{'_count_active_memberships'};
 }
 
-=method count_cancelled_memberships()
+=method count_cancelled_memberships( )
 
 Returns the number of Memberships from the set that have status of 'cancelled'.
 
@@ -111,7 +115,7 @@ sub count_cancelled_memberships {
   return $self->{'_count_cancelled_memberships'};
 }
 
-=method count_pending_memberships()
+=method count_pending_memberships( )
 
 Returns the number of Memberships from the set that have status of 'pending'.
 
@@ -132,7 +136,7 @@ sub count_pending_memberships {
   return $self->{'_count_pending_memberships'};
 }
 
-=method count_set_were_renewal_memberships()
+=method count_set_were_renewal_memberships( )
 
 Returns the number of Memberships from the set whose current Term was a renewal.
 
@@ -190,16 +194,9 @@ sub count_daily_term_expirations {
   my $sth = $self->{'dbh'}->prepare( $sql );
 
   foreach my $datetime (@dates) {
-
-    my @dateparts = reverse (split /[-| |T|:]/, $datetime); 
-    $dateparts[4]--;
-    my $time = timelocal( @dateparts );
-    $time += (24*3600);
-    my $plus_one = localtime($time);
-
-    $sth->execute( $datetime, $plus_one->datetime );
+    $sth->execute( $datetime, $self->datetime_plus_one_day( $datetime ) );
     $counts{ $datetime } = $sth->fetchrow_array;
-  } 
+  }
 
   return (scalar keys %counts == 1) ?
               $counts{ $dates[0] } :
@@ -234,14 +231,7 @@ sub count_daily_term_activations {
   my $sth = $self->{'dbh'}->prepare( $sql );
 
   foreach my $datetime (@dates) {
-
-    my @dateparts = reverse (split /[-| |T|:]/, $datetime); 
-    $dateparts[4]--;
-    my $time = timelocal( @dateparts );
-    $time += (24*3600);
-    my $plus_one = localtime($time);
-
-    $sth->execute( $datetime, $plus_one->datetime );
+    $sth->execute( $datetime, $self->datetime_plus_one_day( $datetime ) );
     $counts{ $datetime } = $sth->fetchrow_array;
   }   
 
@@ -278,12 +268,8 @@ sub count_daily_new_memberships {
   my $sth = $self->{'dbh'}->prepare( $sql );
 
   foreach my $datetime (@dates) {
-
-    my @dateparts = reverse (split /[-| |T|:]/, $datetime);
-    $dateparts[4]--;
-    my $time = timelocal( @dateparts );
-    my $plus_one = ($time + (24*3600));
-    $sth->execute( $time, $plus_one );
+    my ( $start, $over ) = $self->time_plus_one_day( $datetime );
+    $sth->execute( $start, $over );
     $counts{ $datetime } = $sth->fetchrow_array;
   }
 
@@ -320,12 +306,8 @@ sub count_daily_new_terms {
   my $sth = $self->{'dbh'}->prepare( $sql );
 
   foreach my $datetime (@dates) {
-
-    my @dateparts = reverse (split /[-| |T|:]/, $datetime);
-    $dateparts[4]--;
-    my $time = timelocal( @dateparts );
-    my $plus_one = ($time + (24*3600));
-    $sth->execute( $time, $plus_one );
+    my ( $start, $over ) = $self->time_plus_one_day( $datetime );
+    $sth->execute( $start, $over );
     $counts{ $datetime } = $sth->fetchrow_array;
   }
 
@@ -376,56 +358,161 @@ sub count_daily_active_memberships {
 
 } # end sub
 
-=method build_date_range
+=method count_daily_total_memberships( @list_of_dates )
+
+Returns the total number of Memberships (including those that
+have expired) that had been created by the end of the 24-hour
+period beginning with the datetime supplied.
+
+Returns a scalar value when called with one date, or a hashref of
+counts indexed by dates, if called with an array of datetimes.
+
+=cut
+
+sub count_daily_total_memberships {
+  my $self = shift;
+  my @dates = @_;
+  my %counts;
+
+  my $sql = qq/ 
+    SELECT COUNT(mid)
+    FROM membership_entity
+    WHERE created <= ?
+    AND status NOT IN (3)
+  /;
+
+  my $sth = $self->{'dbh'}->prepare( $sql );
+
+  foreach my $datetime (@dates) {
+    my ( $start, $over ) = $self->time_plus_one_day( $datetime );
+    $sth->execute( $over );
+    $counts{ $datetime } = $sth->fetchrow_array;
+  }
+
+  return (scalar keys %counts == 1) ?
+              $counts{ $dates[0] } :
+              \%counts;
+
+} # end sub
+
+
+##################################################
+##
+## Utility subs
+##
+
+
+=method build_date_range( $datetime [, $datetime2] )
 
 Builds a range of dates in ISO 8601 format. Takes dates in YYYY-MM-DD
 format. First date is the earliest date in the range. Second date is
 the latest date in the range: if omitted, this defaults to today's
-date. Returns and array of datetime strings.
+date. Returns an arrayref of datetime strings.
 
 =cut
 
 sub build_date_range {
 
-  my $self  = shift;
-  my $start = shift;
-  my $end   = shift;
-  
-  my @start = reverse (split /-/, $start);
-  $start[1]--;
-  unshift @start, 00, 00, 00; 
-  
-  my @end;
-  if ($end) {
-    @end = reverse (split /-/, $end);
-    $end[1]--;
-    unshift @end, 00, 00, 00; 
-  } else {
-    my $t = localtime;
-    @end = ('00', '00', '00', $t->mday, $t->_mon, $t->year);
-  }
-  
-  my $now = timelocal( @end );
-  my $then = timelocal( @start );
+  my $self      = shift;
+  my $opt_start = shift;
+  my $opt_end   = shift;
 
+  my $dt_start;
+  if ( ! $opt_start or $opt_start !~ m/[0-9]{4}-[0-9]{2}-[0-9]{2}/) {
+    croak qq/
+      Died.
+      build_date_range() requires a beginning date in format 'YYYY-MM-DD'.
+    /;
+  } else {
+    my ($y,$m,$d) = split( '-', $opt_start);
+    $dt_start = DateTime->new( year => $y, month => $m, day => $d );
+  }
+  $dt_start->set_time_zone('UTC');
+  
+  my $dt_end;
+  if ( $opt_end ) {
+    if ( $opt_end !~ m/[0-9]{4}-[0-9]{2}-[0-9]{2}/) {
+      croak qq/ 
+        Died.
+        build_date_range() requires that the end date,
+        if supplied, be in the format 'YYYY-MM-DD'.
+      /; 
+    } else {
+      my ($y,$m,$d) = split( '-', $opt_end);
+      $dt_end = DateTime->new( year => $y, month => $m, day => $d );
+    }
+  } else {
+    # default to today;
+    $dt_end = DateTime->now;
+    $dt_end->set_hour('00');
+    $dt_end->set_minute('00');
+    $dt_end->set_second('00');
+  }
+  $dt_end->set_time_zone('UTC');
+
+  my $set = DateTime::Event::Recurrence->daily();
+  my $itr = $set->iterator( start => $dt_start, end => $dt_end );
+ 
   my @dates;
 
-  while ($then <= $now) {
-    my $t   = localtime( $then );
-
-    #    if ( $t->isdst ) { 
-    #  $t -= 3600;
-    #}   
-
-    push @dates, $t->datetime;
-
-    $then += 86400;
+  while ( my $dt = $itr->next ) {
+    push @dates, $dt->datetime;
   }
 
-  return @dates;
+  return \@dates;
 
 } # end sub
 
+=method datetime_plus_one_day( $datetime )
+
+Returns a timestamps representing the datetime one day
+after the datetime supplied.
+
+=cut
+
+sub datetime_plus_one_day {
+  my $self = shift;
+  my $datetime = shift;
+
+  if ( ! $datetime or $datetime !~ m/[0-9]{4}-[0-9]{2}-[0-9]{2}/ ) {
+    croak qq/
+      Died.
+      datetime_plus_one() requires a datetime in ISO-ish format (YYYY-MM-DDTHH:MM:SS).
+    /;
+  }
+
+  my ($y, $m, $d) = split /[-| |T|:]/, $datetime;
+  return DateTime->new( year => $y, month => $m, day => $d )->set_time_zone( 'UTC' )->clone()->add( days => 1 )->datetime();
+
+} # end sub
+
+
+=method time_plus_one_day( $datetime )
+
+Returns a pair of epoch timestamps representing the datetime supplied
+and the datetime 24 hours later.
+
+=cut
+
+sub time_plus_one_day {
+  my $self = shift;
+  my $datetime = shift;
+
+  if ( ! $datetime or $datetime !~ m/[0-9]{4}-[0-9]{2}-[0-9]{2}/ ) {
+    croak qq/
+      Died.
+      time_plus_one() requires a datetime in ISO-ish format (YYYY-MM-DDTHH:MM:SS).
+    /;
+  }
+
+  my @dateparts = reverse (split /[-| |T|:]/, $datetime);
+  $dateparts[4]--;
+  my $time = timelocal( @dateparts );
+  my $plus_one = ($time + (24*3600));
+
+  return( $time, $plus_one );
+
+} # end sub
 
 1; ## return true to end package CMS::Drupal::Modules::MembershipEntity
 __END__

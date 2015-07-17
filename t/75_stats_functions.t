@@ -25,7 +25,7 @@ $ME->fetch_memberships('all');
 
 my %data;
 
-$data{'count_all_memberships'} =
+$data{'count_total_memberships'} =
   $dbh->selectrow_array(q{SELECT COUNT(mid) FROM membership_entity});
 
 $data{'count_expired_memberships'} =
@@ -103,8 +103,8 @@ $data{'count_set_were_renewal_memberships'} = eval {
 
 #######################
 
-is( $ME->count_all_memberships,
-    $data{'count_all_memberships'},
+is( $ME->count_total_memberships,
+    $data{'count_total_memberships'},
     'Count all memberships' );
 
 is( $ME->count_expired_memberships,
