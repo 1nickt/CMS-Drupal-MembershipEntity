@@ -26,7 +26,7 @@ sub is_active {
 sub is_current {
   my $self = shift;
   my $now = time;
-  return ($self->{'start'} <= $now and $now <= $self->{'end'})
+  return ( $self->{'start'} <= $now and $self->{'end'} > $now )
     ? 1 : 0;
 }
 
