@@ -38,7 +38,7 @@ use Carp qw/ carp croak /;
 has dbh    => ( is => 'ro', isa => InstanceOf['DBI::db'], required => 1 );
 has prefix => ( is => 'ro', isa => Maybe[Str] );
 
-=method count_total_memberships()
+=method count_total_memberships( )
 
 Returns the number of Memberships in the set.
 
@@ -55,7 +55,7 @@ sub count_total_memberships {
   return $self->{'stats'}->{'_count_total_memberships'};
 }
 
-=method count_expired_memberships()
+=method count_expired_memberships( )
 
 Returns the number of Memberships from the set that have status of 'expired'.
 
@@ -76,7 +76,7 @@ sub count_expired_memberships {
   return $self->{'_count_expired_memberships'};
 }
 
-=method count_active_memberships()
+=method count_active_memberships( )
 
 Returns the number of Memberships from the set that have status of 'active'.
 
@@ -97,7 +97,7 @@ sub count_active_memberships {
   return $self->{'_count_active_memberships'};
 }
 
-=method count_cancelled_memberships()
+=method count_cancelled_memberships( )
 
 Returns the number of Memberships from the set that have status of 'cancelled'.
 
@@ -118,7 +118,7 @@ sub count_cancelled_memberships {
   return $self->{'_count_cancelled_memberships'};
 }
 
-=method count_pending_memberships()
+=method count_pending_memberships( )
 
 Returns the number of Memberships from the set that have status of 'pending'.
 
@@ -139,7 +139,7 @@ sub count_pending_memberships {
   return $self->{'_count_pending_memberships'};
 }
 
-=method count_set_were_renewal_memberships()
+=method count_set_were_renewal_memberships( )
 
 Returns the number of Memberships from the set whose current Term was a renewal.
 
