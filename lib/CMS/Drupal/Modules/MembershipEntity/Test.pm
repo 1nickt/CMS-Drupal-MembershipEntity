@@ -13,7 +13,7 @@ our @EXPORT = qw/ build_test_db
 use Carp qw/ croak confess /;
 use Test::More;
 use Test::Group;
-use File::Slurper qw/ read_file read_lines /;
+use File::Slurper qw/ read_text read_lines /;
 use FindBin;
 use Time::Local;
 
@@ -38,7 +38,7 @@ sub build_and_validate_test_db {
 
     subtest 'Created the test database tables.' => sub {
       plan tests => 4;
-      for (split( /\n{2,}/, read_file("$FindBin::Bin/data/test_db.sql") )) {
+      for (split( /\n{2,}/, read_text("$FindBin::Bin/data/test_db.sql") )) {
         my $rv = $dbh->do($_);
         isnt( $rv, undef, 'Added a table to the test database' );
       }   
@@ -53,7 +53,7 @@ sub build_and_validate_test_db {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     /;
   
-    my @fields = split(',', read_file("$FindBin::Bin/data/test_types.dat")) or croak; # This file must have only ONE line
+    my @fields = split(',', read_text("$FindBin::Bin/data/test_types.dat")) or croak; # This file must have only ONE line
   
     my $add_type_rv = $dbh->do( $add_type, {}, @fields, undef );
     cmp_ok( $add_type_rv, '>', 0, 'Populate the membership_entity_type table with a default type' );
@@ -65,7 +65,7 @@ sub build_and_validate_test_db {
       /;
   
     test 'Populate the membership_entity table with test data' => sub {
-      for ( read_lines("$FindBin::Bin/data/test_memberships.dat",  chomp => 1 ) ) {
+      for ( read_lines("$FindBin::Bin/data/test_memberships.dat" ) ) {
         my @fields = split(',');
         my $add_mem_rv = $dbh->do( $add_mem, {}, @fields );
         cmp_ok( $add_mem_rv, '>', 0, "Added a Membership for mid $fields[0]" );
@@ -79,7 +79,7 @@ sub build_and_validate_test_db {
       /;
   
     test 'Populate the membership_entity_term table with test data' => sub {
-      for ( read_lines("$FindBin::Bin/data/test_terms.dat",  chomp => 1 ) ) {
+      for ( read_lines("$FindBin::Bin/data/test_terms.dat" ) ) {
         my @fields = split(',');
         my $add_term_rv = $dbh->do( $add_term, {}, @fields );
         cmp_ok( $add_term_rv, '>', 0, "Added a Term for $fields[0]" );
@@ -104,7 +104,7 @@ sub build_test_db {
   my $dbh = $drupal->dbh( database => ':memory:',
                           driver   => 'SQLite' );
 
-  for (split( /\n{2,}/, read_file("$FindBin::Bin/data/test_db.sql") )) {
+  for (split( /\n{2,}/, read_text("$FindBin::Bin/data/test_db.sql") )) {
     my $rv = $dbh->do($_);
   }
 
@@ -114,7 +114,7 @@ sub build_test_db {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   /;
 
-  my @fields = split(',', read_file("$FindBin::Bin/data/test_types.dat")) or croak; # This file must have only ONE line
+  my @fields = split(',', read_text("$FindBin::Bin/data/test_types.dat")) or croak; # This file must have only ONE line
 
   my $add_type_rv = $dbh->do( $add_type, {}, @fields, undef );
 
@@ -124,7 +124,7 @@ sub build_test_db {
     VALUES ( ?, ?, ?, ?, ?, ?, ?)
     /;
 
-  for ( read_lines("$FindBin::Bin/data/test_memberships.dat",  chomp => 1 ) ) {
+  for ( read_lines("$FindBin::Bin/data/test_memberships.dat" ) ) {
     my @fields = split(',');
     my $add_mem_rv = $dbh->do( $add_mem, {}, @fields );
   }
@@ -135,7 +135,7 @@ sub build_test_db {
     VALUES (?, ?, ?, ?, ?, ?, ?)
     /;
 
-  for ( read_lines("$FindBin::Bin/data/test_terms.dat",  chomp => 1 ) ) {
+  for ( read_lines("$FindBin::Bin/data/test_terms.dat" ) ) {
     my @fields = split(',');
     my $add_term_rv = $dbh->do( $add_term, {}, @fields );
   }
@@ -158,7 +158,7 @@ sub build_test_data {
   my %membs;
   my %terms;
 
-  for ( read_lines("$FindBin::Bin/data/test_memberships.dat", chomp => 1) ) {
+  for ( read_lines("$FindBin::Bin/data/test_memberships.dat" ) ) {
     my @fields = split(',');
     if (scalar @mids > 0) { next unless exists $include{ $fields[0] }; }
     $membs{ $fields[0] } = { 'mid'       => $fields[0],
@@ -172,7 +172,7 @@ sub build_test_data {
 
   my %term_count;
 
-  for ( read_lines("$FindBin::Bin/data/test_terms.dat", chomp => 1) ) {
+  for ( read_lines("$FindBin::Bin/data/test_terms.dat" ) ) {
     my @fields = split(',');
     if (scalar @mids > 0) { next unless exists $include{ $fields[1] } };
     $term_count{ $fields[1] }++;
