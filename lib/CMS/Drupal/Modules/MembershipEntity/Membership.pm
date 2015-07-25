@@ -77,7 +77,7 @@ sub has_renewal {
   my $self = shift;
   $self->{'_has_renewal'} = 0;
   foreach my $term ( values %{ $self->{'terms'} } ) {
-    $self->{'_has_renewal'}++ if ($term->is_future and $term->is_active);
+    $self->{'_has_renewal'} = 1 if ($term->is_future and $term->is_active);
   }
   return $self->{'_has_renewal'};
 }
@@ -93,7 +93,7 @@ sub current_was_renewal {
   my $self = shift;
   $self->{'_current_was_renewal'} = 0;
   foreach my $term ( values %{ $self->{'terms'} } ) {
-    $self->{'_current_was_renewal'}++ if ($term->is_current && $term->was_renewal);
+    $self->{'_current_was_renewal'} = 1 if ($term->is_current and $term->was_renewal);
   }
   return $self->{'_current_was_renewal'};
 }
