@@ -26,14 +26,14 @@ sub is_active {
 sub is_current {
   my $self = shift;
   my $now = time;
-  return ($self->{'start'} <= $now && $now <= $self->{'end'})
+  return ($self->{'start'} <= $now and $now <= $self->{'end'})
     ? 1 : 0;
 }
 
 sub is_future {
   my $self = shift;
   my $now = time;
-  return ($self->{'start'} > $now && $self->{'end'} > $self->{'start'})
+  return ($self->{'start'} > $now and $self->{'end'} > $self->{'start'})
     ? 1 : 0;
 }
 
