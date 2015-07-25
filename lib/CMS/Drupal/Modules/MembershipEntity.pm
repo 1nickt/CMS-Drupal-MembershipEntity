@@ -1,7 +1,9 @@
 package CMS::Drupal::Modules::MembershipEntity;
 
-
 # ABSTRACT: Perl interface to Drupal MembershipEntity entities
+
+use strict;
+use warnings;
 
 use Moo;
 use Types::Standard qw/ :all /;
@@ -29,9 +31,9 @@ sub fetch_memberships {
     }
 
     if ( ! grep { /all/ } @mids ) {
-         # ^ in that case no WHERE clause
+       # ^ in that case no WHERE clause
 
-      for (@mids) {
+      for ( @mids ) {
         # Let's be real strict about what we try to pass in to the DBMS
         croak 'FATAL: Invalid mid (must be all ASCII digits).'
           unless /^[0-9]+$/;
@@ -43,7 +45,7 @@ sub fetch_memberships {
     }
   }
 
-  my $prefix = $self->{'prefix'} || '';
+  my $prefix = ( $self->{'prefix'} || '' );
 
   my $temp;
   my $memberships;
@@ -59,7 +61,7 @@ sub fetch_memberships {
   $sth->execute;
   
   my $results = $sth->fetchall_hashref('mid');
-  foreach my $mid (keys( %$results )) {
+  foreach my $mid (keys( %{ $results } )) {
     $temp->{ $mid } = $results->{ $mid };
   }
   
@@ -82,8 +84,8 @@ sub fetch_memberships {
     ## Shouldn't be, but is, possible to have a Term with no
     ## start or end date
     if ( not defined $row->{'start'} or not defined $row->{'end'} ) {
-      carp "MISSING DATE: tid< $row->{'tid'} > " .
-           "(uid< $temp->{ $row->{'mid'} }->{'uid'} >) has no start " .
+      carp "MISSING DATE: tid[ $row->{'tid'} ] " .
+           "(uid[ $temp->{ $row->{'mid'} }->{'uid'} ]) has no start " .
            "or end date defined. Skipping ...";
       next;
     }
@@ -91,14 +93,14 @@ sub fetch_memberships {
     ## Shouldn't be, but is, possible to have a Term with no
     ## corresponding Memberships
     if ( not defined $temp->{ $row->{'mid'} } ) {
-      carp "TERM WITH NO MEMBERSHIP: tid< $row->{'tid'} > " .
+      carp "TERM WITH NO MEMBERSHIP: tid[ $row->{'tid'} ] " .
            "has no corresponding Membership. Skipping ...";
       next;
     }
 
     ## convert the start and end to unixtime
     for (qw/ start end /) {
-      my @datetime = reverse (split /[-| |:]/, $row->{ $_ });
+      my @datetime = reverse ( split /[-| |:]/, $row->{ $_ } );
       $datetime[4]--;
       $row->{ $_ } = timelocal( @datetime );
     } 
@@ -110,16 +112,16 @@ sub fetch_memberships {
     ## Instantiate a MembershipEntity::Term object for each
     ## Term now that we have the data
     my $term = CMS::Drupal::Modules::MembershipEntity::Term->new( $row );
-    $temp->{ $row->{'mid'} }->{ 'terms' }->{ $row->{'tid'} } = $term;
+    $temp->{ $row->{'mid'} }->{'terms'}->{ $row->{'tid'} } = $term;
   }
 
   ## Instantiate a MembershipEntity::Membership object for each
   ## Membership now that we have the data
-  foreach my $mid( keys( %$temp )) {
+  foreach my $mid(keys( %{ $temp } )) {
     
     ## Shouldn't be, but is, possible to have a Membership with no Term
     if (not defined $temp->{ $mid }->{'terms'}) {
-      carp "MISSING TERM: mid< $mid > (uid< $temp->{ $mid }->{'uid'} >) " .
+      carp "MISSING TERM: mid[ $mid ] (uid[ $temp->{ $mid }->{'uid'} ]) " .
            "has no Membership Terms. Skipping ...";
       next;
     }
