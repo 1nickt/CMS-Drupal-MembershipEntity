@@ -2,6 +2,9 @@ package CMS::Drupal::Modules::MembershipEntity::Cookbook;
 
 # ABSTRACT: Guide and tutorials for using the Perl-Drupal Membership Entity interface
 
+use strict;
+use warnings;
+
 =head1 SYNOPSIS
 
 This manual contains a collection of tutorials and tips for using
@@ -23,7 +26,7 @@ opening lines from the code samples below. If you are copy-pasting the
 examples and trying them out on your system, you should prepend the
 following to each snippet:
 
-  #!perl -w
+  #!/usr/bin/perl -w
   use strict;
   use feature 'say';
 
@@ -37,6 +40,27 @@ prefer "say" in examples (and in my code!) because you can omit the
 newlines and their quotation marks.
 
 =head1 INSTALLATION AND TESTING
+
+Install the modules however you normally do. The easiest way is to get
+them from CPAN:
+
+  $ cpan install CMS::Drupal
+  $ cpan install CMS::Drupal::Modules::MembershipEntity
+
+If you want the modules to test themselves against your Drupal database
+you will need to set the DRUPAL_TEST_CREDS environment variable as 
+described in the Testing section of the documentation for the parent
+CMS::Drupal module. Essentially you will need to provide at least
+the database name and driver, so your minimum testing config would be:
+
+  $ set DRUPAL_TEST_CREDS=database,foo,driver,Pg
+
+or something similar.
+
+If you come to this tutorial after you've installed the modules you
+can still test by finding the CPAN build directory and just running
+
+  $ perl t/02_valid_drupal.t
 
 =head1 DATA ANALYSIS
 
@@ -58,7 +82,7 @@ Notice that because Stats.pm exports all its useful methods, you can
 import them into MembershipEntity.pm and thus make them available in
 your $ME object:
 
-  #! perl -w
+  #!/usr/bin/perl -w
   use strict;
   use CMS::Drupal;
   use CMS::Drupal::Modules::MembershipEntity;
@@ -201,7 +225,7 @@ the module will use today's date. Times are set to 00:00:00.
 Here's an example of a simple program that reports the previous
 week's statistics.
 
-  #! perl -w
+  #!/usr/bin/perl -w
   use strict;
   use DateTime;
   use CMS::Drupal;
@@ -263,6 +287,64 @@ This program outputs something like:
 Now all you have to do is get the data for multiple weeks, sum
 up the daily totals for the week, and you have the beginnings
 of a useful report!
+
+=head3 Automated daily report
+
+If you want to build up a statistical record about your Memberships,
+you'll probably want to export counts from the database into a
+spreadsheet or other local database, so you can analyse them and make
+graphs and so on.
+
+The simplest way to do this is to write a program similar to the one
+above and run it from cron every day. The Stats.pm module provides
+a handy method for retrieving yesterday's data.
+
+If you call $ME->report_yesterday() you'll get an anonymous hash
+like this:
+
+ {
+  'count_daily_term_expirations' => '1',
+  'count_daily_new_memberships' => '2',
+  'count_daily_total_memberships' => '1498',
+  'count_daily_new_terms' => '3',
+  'count_daily_term_activations' => '2',
+  'count_daily_active_memberships' => '580',
+  'count_daily_renewals' => '2',
+  'date' => '2013-02-14T00:00:00'
+ }
+
+You can optionally pass an anonymous array of method names that you
+want exlcuded from the output. Check the documentation for Stats.pm
+for a list of all the count_daily_*() methods.
+
+So now you can do something in your nightly program something like:
+
+  ## Assumes you have a database with a table called 'daily'
+
+  my $sql = qq/ 
+    INSERT INTO daily
+    ('date', 'active', 'expirations', 'new_terms', 'new_memberships', 'renewals')
+    VALUES ( ?, ?, ?, ?, ?, ? ) 
+  /;
+
+  my $sth = $dbh->prepare( $sql );
+
+  my @exclude = qw/ count_daily_total_memberships
+                    count_daily_term_activations /;
+
+  my $yesterday = $ME->report_yesterday( \@exclude );
+
+  $sth->execute( $yesterday->{'date'},
+                 $yesterday->{'count_daily_active_memberships'},
+                 $yesterday->{'count_daily_term_expirations'},
+                 $yesterday->{'count_daily_new_terms'},
+                 $yesterday->{'count_daily_new_memberships'},
+                 $yesterday->{'count_daily_renewals'} );
+
+
+. . . or of course you could send an email, update a text log, whatever...
+
+
 
 =cut
 

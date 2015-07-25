@@ -2,16 +2,18 @@ package CMS::Drupal::Modules::MembershipEntity::Test;
 
 # ABSTRACT: Exports some helper routines for testing
 
+use strict;
+use warnings;
+
 use base "Exporter::Tiny";
 our @EXPORT = qw/ build_test_db
                   build_and_validate_test_db
                   build_test_data /;
 
-use Data::Dumper;
 use Carp qw/ croak confess /;
 use Test::More;
 use Test::Group;
-use File::Slurp::Tiny qw/ read_file read_lines /;
+use File::Slurper qw/ read_file read_lines /;
 use FindBin;
 use Time::Local;
 
@@ -264,8 +266,8 @@ This method returns a data structure containing the Memberships as they would be
 CMS::Drupal::Modules::MembershipEntity::fetch_memberships(). It creates the data structure
 by parsing the same files that were used to build in test database.
 
-The method takes an optional single argument, which is an arrayref containing a list of B<mid>s.
-Only the Memberships associated with the B<mid>s provided will; be included in the data
+The method takes an optional single argument, which is an array containing a list of B<mid>s.
+Only the Memberships associated with the B<mid>s provided will be included in the data
 returned.
 
   $cmp_data = build_test_data('1234', '5678');

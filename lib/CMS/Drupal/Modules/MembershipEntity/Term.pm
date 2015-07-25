@@ -67,7 +67,7 @@ Note: This module does not currently create or edit Membership Terms.
 
 This module is not designed to be called directly, although it can be. This module is called by L<CMS::Drupal::Modules::MembershipEntity>, which has a method that retrieves all Membership Terms and creates an object for each of them (which is stored inside the parent Membership object). Error checking is handled in the latter module, so if you use this module directly you will have to do your own error checking, for example, to make sure that the Term actually has a start and an end date-and-time associated with it. (Yes, I know it should be impossible not to, but it happens. This is Drupal we are dealing with.)
  
-=head2 PARAMETERS
+=head2 CONSTRUCTOR PARAMETERS
 
 B<All parameters are required.> Consult the Drupal MembershipEntity documentation for more details.
 
