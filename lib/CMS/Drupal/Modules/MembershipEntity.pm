@@ -152,11 +152,11 @@ __END__
   # or:
   my $hashref = $ME->fetch_memberships( @list );
  
-  foreach my $mid ( sort keys %{$hashref} ) {
+  foreach my $mid ( sort keys %{ $hashref } ) {
     my $mem = $hashref->{ $mid };
    
-    print $mem->{'type'};
-    &send_newsletter( $mem->{'uid'} ) if $mem->active;
+    print $mem->type;
+    send_newsletter( $mem->uid ) if $mem->active;
    
     # etc ...
   }
@@ -218,7 +218,7 @@ module where they are documented completely.
 
 You can directly access all the Membership's attributes as follows:
 
-  $mem->{ attr_name }
+  $mem->attr_name
 
 Where attr_name is one of:
 
@@ -230,7 +230,7 @@ Where attr_name is one of:
   created
   changed
 
-There is also another attribute `terms`, which contains an hashref of Term
+There is also another attribute 'terms', which contains a hashref of Term
 objects, indexed by B<tid>. Each Term can be accessed by the methods described
 in the Membership Terms section below.
 
@@ -238,8 +238,18 @@ in the Membership Terms section below.
 
 Once you have the Membership object, you can call some methods on it:
 
-  print "User $mem->{'uid'} is in good standing" if $mem->is_active;
-  print "User $mem->{'uid'} has already renewed" if $mem->has_renewal;
+  print 'User ' . $mem->uid . ' is in good standing' if $mem->is_active;
+  print $mem->mid . ' has already renewed' if $mem->has_renewal;
+
+Methods are:
+
+=for :list
+* is_active()
+* is_expired()
+* is_cancelled()
+* is_pending()
+* has_renewal()
+* current_was_renewal()
 
 =head2 Membership Terms
 
@@ -247,7 +257,7 @@ This module uses CMS::Drupal::Modules::MembershipEntity::Term so you
 don't have to. The methods described below are actually in the latter
 module where they are documented compeletely.
 
-  while ( my ($tid, $term) = each %{$mem->{'terms'}} ) {
+  while ( my ($tid, $term) = each %{ $mem->{'terms'} } ) {
     # do something ...
   }
 
@@ -255,7 +265,7 @@ module where they are documented compeletely.
 
 You can directly access all the Term's attributes as follows:
 
-  $term->{ attr_name }
+  $term->attr_name;
 
 Where attr_name is one of:
 
@@ -272,14 +282,16 @@ the Term is a renewal, etc.
 
 =head3 Membership Term methods
 
-  print "$term->{'tid'} is active" if $term->is_active;
+  print 'This is a live one' if $term->is_current;
+  push @renewals, $term->tid if $term->was_renewal;
 
-  print "This is a live one" if $term->is_current;
+Methods are:
 
-  print "$mem->{'uid'} has a prepaid renewal" if $term->is_future;
-
-  print "$mem->{'uid'} is a repeat customer" if $term->was_renewal;
-
+=for :list
+* is_active()
+* is_current()
+* is_future()
+* was_renewal()
 
 =head1 SEE ALSO
 

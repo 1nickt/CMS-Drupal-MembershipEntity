@@ -2,6 +2,9 @@ package CMS::Drupal::Modules::MembershipEntity::Stats;
 
 # ABSTRACT: Generate statistics about MembershipEntity memberships on a Drupal site. 
 
+use strict;
+use warnings;
+
 use Moo;
 use Types::Standard qw/ :all /;
 use base 'Exporter::Tiny'; 
@@ -17,10 +20,12 @@ our @EXPORT = qw/
   count_daily_term_activations
   count_daily_new_memberships
   count_daily_new_terms
+  count_daily_renewals
   count_daily_active_memberships
   build_date_range
   time_plus_one_day
   datetime_plus_one_day
+  report_yesterday
 /;
 
 use Time::Local;
@@ -28,14 +33,12 @@ use DateTime::Event::Recurrence;
 
 use CMS::Drupal::Modules::MembershipEntity::Membership;
 
-use Data::Dumper;
 use Carp qw/ carp croak /;
-# use feature qw/ say /;
 
 has dbh    => ( is => 'ro', isa => InstanceOf['DBI::db'], required => 1 );
 has prefix => ( is => 'ro', isa => Maybe[Str] );
 
-=method count_total_memberships( )
+=method count_total_memberships()
 
 Returns the number of Memberships in the set.
 
@@ -44,15 +47,15 @@ Returns the number of Memberships in the set.
 sub count_total_memberships {
   my $self = shift;
   if ($self->{'_memberships'}) {
-    $self->{'stats'}->{'_count_total_memberships'} = scalar keys %{$self->{'_memberships'}};
+    $self->{'stats'}->{'_count_total_memberships'} = scalar keys %{ $self->{'_memberships'} };
   } else {
     my $sql = q{ SELECT COUNT(mid) FROM membership_entity };
-    $self->{'stats'}->{'_count_total_memberships'} = $self->{'dbh'}->selectrow_array($sql);
+    $self->{'stats'}->{'_count_total_memberships'} = $self->{'dbh'}->selectrow_array( $sql );
   }
   return $self->{'stats'}->{'_count_total_memberships'};
 }
 
-=method count_expired_memberships( )
+=method count_expired_memberships()
 
 Returns the number of Memberships from the set that have status of 'expired'.
 
@@ -62,18 +65,18 @@ sub count_expired_memberships {
   my $self = shift;
   if ($self->{'_memberships'}) {
     my $count = 0;
-    while ( my ($mid, $mem) = each %{$self->{'_memberships'}} ) {
+    while ( my ($mid, $mem) = each %{ $self->{'_memberships'} } ) {
       $count++ if $mem->is_expired;
     }
     $self->{'_count_expired_memberships'} = $count;
   } else {
     my $sql = q{ select count(mid) from membership_entity where status = 0 };
-    $self->{'_count_expired_memberships'} = $self->{'dbh'}->selectrow_array($sql);
+    $self->{'_count_expired_memberships'} = $self->{'dbh'}->selectrow_array( $sql );
   }
   return $self->{'_count_expired_memberships'};
 }
 
-=method count_active_memberships( )
+=method count_active_memberships()
 
 Returns the number of Memberships from the set that have status of 'active'.
 
@@ -83,18 +86,18 @@ sub count_active_memberships {
   my $self = shift;
   if ($self->{'_memberships'}) {
     my $count = 0;
-    while ( my ($mid, $mem) = each %{$self->{'_memberships'}} ) {
+    while ( my ($mid, $mem) = each %{ $self->{'_memberships'} } ) {
       $count++ if $mem->is_active;
     }
     $self->{'_count_active_memberships'} = $count;
   } else {
     my $sql = q{ SELECT COUNT(mid) FROM membership_entity WHERE status = 1 };
-    $self->{'_count_active_memberships'} = $self->{'dbh'}->selectrow_array($sql);
+    $self->{'_count_active_memberships'} = $self->{'dbh'}->selectrow_array( $sql );
   }
   return $self->{'_count_active_memberships'};
 }
 
-=method count_cancelled_memberships( )
+=method count_cancelled_memberships()
 
 Returns the number of Memberships from the set that have status of 'cancelled'.
 
@@ -104,18 +107,18 @@ sub count_cancelled_memberships {
   my $self = shift;
   if ($self->{'_memberships'}) {
     my $count = 0;
-    while ( my ($mid, $mem) = each %{$self->{'_memberships'}} ) {
+    while ( my ($mid, $mem) = each %{ $self->{'_memberships'} } ) {
       $count++ if $mem->is_cancelled;
     }
     $self->{'_count_cancelled_memberships'} = $count;
   } else {
     my $sql = q{ SELECT COUNT(mid) FROM membership_entity WHERE status = 2 };
-    $self->{'_count_cancelled_memberships'} = $self->{'dbh'}->selectrow_array($sql);
+    $self->{'_count_cancelled_memberships'} = $self->{'dbh'}->selectrow_array( $sql );
   }
   return $self->{'_count_cancelled_memberships'};
 }
 
-=method count_pending_memberships( )
+=method count_pending_memberships()
 
 Returns the number of Memberships from the set that have status of 'pending'.
 
@@ -125,18 +128,18 @@ sub count_pending_memberships {
   my $self = shift;
   if ($self->{'_memberships'}) {
     my $count = 0;
-    while ( my ($mid, $mem) = each %{$self->{'_memberships'}} ) {
+    while ( my ($mid, $mem) = each %{ $self->{'_memberships'} } ) {
       $count++ if $mem->is_pending;
     }
     $self->{'_count_pending_memberships'} = $count;
   } else {
     my $sql = q{ select count(mid) from membership_entity where status = 3 };
-    $self->{'_count_pending_memberships'} = $self->{'dbh'}->selectrow_array($sql);
+    $self->{'_count_pending_memberships'} = $self->{'dbh'}->selectrow_array( $sql );
   }
   return $self->{'_count_pending_memberships'};
 }
 
-=method count_set_were_renewal_memberships( )
+=method count_set_were_renewal_memberships()
 
 Returns the number of Memberships from the set whose current Term was a renewal.
 
@@ -145,13 +148,11 @@ Dies if $ME->{'_memberships'} is not defined.
 =cut
 
 sub count_set_were_renewal_memberships {
-  my %fake;
   my $self = shift;
   if ($self->{'_memberships'}) {
     $self->{'_count_were_renewal_memberships'} = 0;
-    while ( my ($mid, $mem) = each %{$self->{'_memberships'}} ) {
+    while ( my ($mid, $mem) = each %{ $self->{'_memberships'} } ) {
       if ( $mem->current_was_renewal ) {
-        $fake{$mem->{mid}} = 1;
         $self->{'_count_were_renewal_memberships'}++;
       }
     }
@@ -163,8 +164,7 @@ sub count_set_were_renewal_memberships {
       on your MembershipEntity object before calling this method.
     /;
   }
-  return \%fake;
-  #return $self->{'_count_were_renewal_memberships'};
+  return $self->{'_count_were_renewal_memberships'};
 }
 
 =method count_daily_term_expirations( @list_of_dates )
@@ -199,8 +199,8 @@ sub count_daily_term_expirations {
   }
 
   return (scalar keys %counts == 1) ?
-              $counts{ $dates[0] } :
-              \%counts;
+               $counts{ $dates[0] } :
+               \%counts;
   
 } # end sub
 
@@ -317,6 +317,61 @@ sub count_daily_new_terms {
 
 } # end sub
 
+
+=method count_daily_renewals( @list_of_dates )
+
+Retruns the number of Membership Terms belonging to Memberships in
+the set that were created in the 24-hour period beginning with the
+date supplied and that were the second or subsequent Term belonging
+to that Membership.
+
+Returns a scalar value when called with one date, or a hashref of
+counts indexed by dates, if called with an array of date-times.
+
+=cut
+
+sub count_daily_renewals {
+  my $self = shift;
+  my @dates = @_;
+  my %counts;
+
+  my $sql1 = qq/ 
+    SELECT id, mid
+    FROM membership_entity_term
+    WHERE created >= ?
+    AND created < ?
+    AND status NOT IN (3)
+  /;
+
+  my $sth1 = $self->{'dbh'}->prepare( $sql1 );
+
+  my $sql2 = qq/
+    SELECT id
+    FROM membership_entity_term
+    WHERE mid = ?
+  /;
+
+  my $sth2 = $self->{'dbh'}->prepare( $sql2 );
+
+  foreach my $datetime (@dates) {
+    $counts{ $datetime } = 0;
+    my ( $start, $over ) = $self->time_plus_one_day( $datetime );
+    $sth1->execute( $start, $over );
+    while ( my ($id, $mid) = $sth1->fetchrow_array ) {
+      my $was_renewal = 0;
+      $sth2->execute( $mid );
+      for ( $sth2->fetchrow_array ) {
+        $was_renewal = 1 if $_ < $id;
+      }
+      $counts{ $datetime } += $was_renewal;
+    }
+  }
+
+  return (scalar keys %counts == 1) ?
+            $counts{ $dates[0] } :
+            \%counts;
+
+} # end sub
 
 =method count_daily_active_memberships( @list_of_dates )
 
@@ -465,7 +520,7 @@ sub build_date_range {
 
 =method datetime_plus_one_day( $datetime )
 
-Returns a timestamps representing the datetime one day
+Returns a timestamp representing the datetime one day
 after the datetime supplied.
 
 =cut
@@ -477,12 +532,17 @@ sub datetime_plus_one_day {
   if ( ! $datetime or $datetime !~ m/[0-9]{4}-[0-9]{2}-[0-9]{2}/ ) {
     croak qq/
       Died.
-      datetime_plus_one() requires a datetime in ISO-ish format (YYYY-MM-DDTHH:MM:SS).
+      datetime_plus_one() requires a datetime
+      in ISO-ish format (YYYY-MM-DDTHH:MM:SS).
     /;
   }
 
   my ($y, $m, $d) = split /[-| |T|:]/, $datetime;
-  return DateTime->new( year => $y, month => $m, day => $d )->set_time_zone( 'UTC' )->clone()->add( days => 1 )->datetime();
+  return DateTime->new( year => $y, month => $m, day => $d )
+                   ->set_time_zone( 'UTC' )
+                     ->clone()
+                       ->add( days => 1 )
+                         ->datetime();
 
 } # end sub
 
@@ -501,11 +561,12 @@ sub time_plus_one_day {
   if ( ! $datetime or $datetime !~ m/[0-9]{4}-[0-9]{2}-[0-9]{2}/ ) {
     croak qq/
       Died.
-      time_plus_one() requires a datetime in ISO-ish format (YYYY-MM-DDTHH:MM:SS).
+      time_plus_one() requires a datetime in
+      ISO-ish format (YYYY-MM-DDTHH:MM:SS).
     /;
   }
 
-  my @dateparts = reverse (split /[-| |T|:]/, $datetime);
+  my @dateparts = reverse ( split /[-| |T|:]/, $datetime );
   $dateparts[4]--;
   my $time = timelocal( @dateparts );
   my $plus_one = ($time + (24*3600));
@@ -513,6 +574,58 @@ sub time_plus_one_day {
   return( $time, $plus_one );
 
 } # end sub
+
+=method report_yesterday( [exclude => \@excluded_methods] )
+
+This convenience method returns a hashref with the statistics from the
+day before today. If called with no arguments it returns data from
+all the count_daily_*() methods. Hashref returned includes the 
+datetime used, indexed with 'date'.
+
+Optionally takes an argument 'exclude', the value of which must be an
+anonymous array of method names you wish to exclude from the data
+returned.
+
+=cut
+
+sub report_yesterday {
+  my $self = shift;
+  my %args = @_;
+  
+  my %methods = map { $_ => 1 } ( qw/
+    count_daily_total_memberships
+    count_daily_total_memberships
+    count_daily_term_expirations
+    count_daily_term_activations
+    count_daily_new_memberships
+    count_daily_new_terms
+    count_daily_active_memberships
+    count_daily_renewals /);
+
+  if ( $args{'exclude'} ) {
+    delete $methods{ $_ } for @{ $args{'exclude'} };
+  }
+
+  my $yesterday = DateTime->now()
+                            ->clone()
+                              ->subtract(days => 1)
+                                ->set( hour => 0, minute => 0, second => 0 )
+                                  ->datetime();
+  
+  my %data;
+
+  for ( keys %methods ) {
+    $data{ $_ } = $self->$_( $yesterday );
+  }
+  
+  $data{ 'date' } = $yesterday;
+
+  return \%data;
+
+} # end sub
+
+
+
 
 1; ## return true to end package CMS::Drupal::Modules::MembershipEntity
 __END__

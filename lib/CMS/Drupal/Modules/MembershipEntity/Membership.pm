@@ -123,7 +123,7 @@ Note: This module does not currently create or edit Memberships.
 
 This module is not designed to be called directly, although it can be. This module is called by L<CMS::Drupal::Modules::MembershipEntity|CMS::Drupal::Modules::MembershipEntity>, which has a method to retrieve Memberships and create an object for each of them. Error checking is handled in the latter module, so if you use this module directly you will have to do your own error checking, for example, to make sure that the Membership actually has at least one Term associated with it. (Yes, I know it should be impossible not to, but it happens. This is Drupal we are dealing with.)
 
-=head2 PARAMETERS
+=head2 CONSTRUCTOR PARAMETERS
 
 B<All parameters are required.> Consult the Drupal MembershipEntity documentation for more details.
 
