@@ -690,7 +690,9 @@ sub report_yesterday {
     count_daily_new_memberships
     count_daily_new_terms
     count_daily_active_memberships
-    count_daily_renewals /);
+    count_daily_renewals
+    count_daily_were_renewal_memberships
+  /);
 
   if ( $args{'exclude'} ) {
     delete $methods{ $_ } for @{ $args{'exclude'} };
@@ -713,8 +715,6 @@ sub report_yesterday {
   return \%data;
 
 } # end sub
-
-
 
 
 1; ## return true to end package CMS::Drupal::Modules::MembershipEntity
