@@ -185,6 +185,11 @@ sub count_daily_were_renewal_memberships {
   my @dates = @_;
   my %counts;
 
+  carp qq/
+    Warning!
+    Called a count_daily_ method with no dates. This will return nothing!
+  / if ! @dates;
+
   ## First get all the terms 
   my $sql = qq/ 
     SELECT mid, id AS tid, start, end
@@ -273,6 +278,11 @@ sub count_daily_term_expirations {
   my @dates = @_;
   my %counts;
 
+  carp qq/ 
+    Warning!
+    Called a count_daily_ method with no dates. This will return nothing!
+  / if ! @dates;
+
   my $sql = qq/
     SELECT COUNT(DISTINCT mid)
     FROM membership_entity_term
@@ -309,6 +319,11 @@ sub count_daily_term_activations {
   my $self = shift;
   my @dates = @_; 
   my %counts;
+
+  carp qq/ 
+    Warning!
+    Called a count_daily_ method with no dates. This will return nothing!
+  / if ! @dates;
 
   my $sql = qq/ 
     SELECT COUNT(DISTINCT mid)
@@ -347,6 +362,11 @@ sub count_daily_new_memberships {
   my @dates = @_;
   my %counts;
 
+  carp qq/ 
+    Warning!
+    Called a count_daily_ method with no dates. This will return nothing!
+  / if ! @dates;
+
   my $sql = qq/ 
     SELECT COUNT(DISTINCT mid)
     FROM membership_entity
@@ -384,6 +404,11 @@ sub count_daily_new_terms {
   my $self = shift;
   my @dates = @_;
   my %counts;
+
+  carp qq/ 
+    Warning!
+    Called a count_daily_ method with no dates. This will return nothing!
+  / if ! @dates;
 
   my $sql = qq/ 
     SELECT COUNT(DISTINCT mid)
@@ -424,6 +449,11 @@ sub count_daily_renewals {
   my $self = shift;
   my @dates = @_;
   my %counts;
+
+  carp qq/ 
+    Warning!
+    Called a count_daily_ method with no dates. This will return nothing!
+  / if ! @dates;
 
   my $sql1 = qq/ 
     SELECT id, mid
@@ -483,6 +513,11 @@ sub count_daily_active_memberships {
   my @dates = @_;
   my %counts;
 
+  carp qq/ 
+    Warning!
+    Called a count_daily_ method with no dates. This will return nothing!
+  / if ! @dates;
+
   my $sql = qq/
     SELECT COUNT(DISTINCT mid)
     FROM membership_entity_term
@@ -518,6 +553,11 @@ sub count_daily_total_memberships {
   my $self = shift;
   my @dates = @_;
   my %counts;
+
+  carp qq/ 
+    Warning!
+    Called a count_daily_ method with no dates. This will return nothing!
+  / if ! @dates;
 
   my $sql = qq/ 
     SELECT COUNT(mid)
