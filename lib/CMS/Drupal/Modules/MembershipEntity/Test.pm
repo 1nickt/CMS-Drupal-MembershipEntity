@@ -201,7 +201,7 @@ sub build_test_data {
     $membs{ $mem } = bless( $membs{ $mem }, 'CMS::Drupal::Modules::MembershipEntity::Membership' );
   }
 
-  return \%membs;
+  return (scalar keys %membs == 1) ? @membs{ keys %membs } : \%membs;
 }
 
 1; # End package
