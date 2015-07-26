@@ -47,8 +47,8 @@ sub fetch_memberships {
 
   my $prefix = ( $self->{'prefix'} || '' );
 
-  my $temp;
-  my $memberships;
+  my %temp;
+  my %memberships;
 
   ## Get the Membership info
   my $sql = qq|
@@ -62,7 +62,7 @@ sub fetch_memberships {
   
   my $results = $sth->fetchall_hashref('mid');
   foreach my $mid (keys( %{ $results } )) {
-    $temp->{ $mid } = $results->{ $mid };
+    $temp{ $mid } = $results->{ $mid };
   }
   
   ## Get the Membership Term info
@@ -85,14 +85,14 @@ sub fetch_memberships {
     ## start or end date
     if ( not defined $row->{'start'} or not defined $row->{'end'} ) {
       carp "MISSING DATE: tid[ $row->{'tid'} ] " .
-           "(uid[ $temp->{ $row->{'mid'} }->{'uid'} ]) has no start " .
+           "(uid[ $temp{ $row->{'mid'} }->{'uid'} ]) has no start " .
            "or end date defined. Skipping ...";
       next;
     }
 
     ## Shouldn't be, but is, possible to have a Term with no
     ## corresponding Memberships
-    if ( not defined $temp->{ $row->{'mid'} } ) {
+    if ( not defined $temp{ $row->{'mid'} } ) {
       carp "TERM WITH NO MEMBERSHIP: tid[ $row->{'tid'} ] " .
            "has no corresponding Membership. Skipping ...";
       next;
@@ -112,27 +112,29 @@ sub fetch_memberships {
     ## Instantiate a MembershipEntity::Term object for each
     ## Term now that we have the data
     my $term = CMS::Drupal::Modules::MembershipEntity::Term->new( $row );
-    $temp->{ $row->{'mid'} }->{'terms'}->{ $row->{'tid'} } = $term;
+    $temp{ $row->{'mid'} }->{'terms'}->{ $row->{'tid'} } = $term;
   }
 
   ## Instantiate a MembershipEntity::Membership object for each
   ## Membership now that we have the data
-  foreach my $mid(keys( %{ $temp } )) {
+  foreach my $mid(keys( %temp )) {
     
     ## Shouldn't be, but is, possible to have a Membership with no Term
-    if (not defined $temp->{ $mid }->{'terms'}) {
-      carp "MISSING TERM: mid[ $mid ] (uid[ $temp->{ $mid }->{'uid'} ]) " .
+    if (not defined $temp{ $mid }->{'terms'}) {
+      carp "MISSING TERM: mid[ $mid ] (uid[ $temp{ $mid }->{'uid'} ]) " .
            "has no Membership Terms. Skipping ...";
       next;
     }
 
-    $memberships->{ $mid } =
-    CMS::Drupal::Modules::MembershipEntity::Membership->new( $temp->{ $mid } );
+    $memberships{ $mid } =
+    CMS::Drupal::Modules::MembershipEntity::Membership->new( $temp{ $mid } );
   }
   
-  $self->{'_memberships'} = $memberships;
+  $self->{'_memberships'} = \%memberships;
 
-  return $memberships;
+  return (scalar keys %memberships == 1) ?
+       @memberships{ keys %memberships } :
+                            \%memberships;
 }
 
 1; ## return true to end package CMS::Drupal::Modules::MembershipEntity
@@ -144,14 +146,11 @@ __END__
 
   my $ME = CMS::Drupal::Modules::MembershipEntity->new( { dbh => $dbh } );
 
-  my $hashref = $ME->fetch_memberships( 'all' );
+  my $href = $ME->fetch_memberships( 'all' );
 
   # or:
-  my $hashref = $ME->fetch_memberships( 123 );
+  my $href = $ME->fetch_memberships( @list );
 
-  # or:
-  my $hashref = $ME->fetch_memberships( @list );
- 
   foreach my $mid ( sort keys %{ $hashref } ) {
     my $mem = $hashref->{ $mid };
    
@@ -161,19 +160,32 @@ __END__
     # etc ...
   }
 
+Or, for a single Membership:
+
+   my $mem = $ME->fetch_memberships( 123 );
+
+   print $mem->type;
+   send_newsletter( $mem->uid ) if $mem->active;
+        
+   # etc ...
+
 =head1 USAGE
 
-This package returns a hashref containing one element for each Membership that
-was requested. The hashref is indexed by B<mid> and the element is a Membership
-object, which contains at least one Term object, so you have access to all the
-methods you can use on your Membership.
+This package provides easy access to Perl objects representing Membership
+Entity memberships and their terms. Rather than creating those objects
+directly, you should allow this module to do so.
+
+For each Membership that you want, you can fetch a Membership object, which
+contains at least one Term object, so you have access to all the methods
+you can use on your Membership and its Terms.
 
 For this reason the methods actually provided by the submodules are documented
 here.
 
 =method fetch_memberships
 
-This method returns a hashref containing Membership objects indexed by B<mid>.
+This method returns either a hashref containing Membership objects indexed by
+B<mid>, or a single Membership object (if it was called with a single B<mid>).
 
 When called with the argument 'all', the hashref contains all Memberships in 
 the Drupal database, which might be too much for your memory if you have 
@@ -182,8 +194,11 @@ lots of them.
 When called with an array containing B<mid>s, the hashref will contain an 
 object for each mid in the array.
 
+When called with a single B<mid>, the method will return a single object
+(no hashref).
+
   # Fetch a single Membership
-  my $hashref = $ME->fetch_memberships( 1234 ); 
+  my $mem = $ME->fetch_memberships( 1234 ); 
 
   # Fetch a set of Memberships
   my $hashref = $ME->fetch_memberships( 1234, 5678 );
@@ -209,10 +224,6 @@ to test against your real Drupal database.
 This module uses CMS::Drupal::Modules::MembershipEntity::Membership so you
 don't have to. The methods shown below are actually in the latter 
 module where they are documented completely.
-
-  my $hashref = $ME->fetch_memberships( 1234 );
-  my $mem = $hashref->{'1234'};
-  # now you have a Membership object
 
 =head3 Attributes
 
