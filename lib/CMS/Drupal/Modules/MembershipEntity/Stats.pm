@@ -15,6 +15,7 @@ our @EXPORT = qw/
   count_cancelled_memberships
   count_pending_memberships
   count_set_were_renewal_memberships
+  count_daily_were_renewal_memberships
   count_daily_total_memberships
   count_daily_term_expirations
   count_daily_term_activations
@@ -166,6 +167,95 @@ sub count_set_were_renewal_memberships {
   }
   return $self->{'_count_were_renewal_memberships'};
 }
+
+=method count_daily_were_renewal_memberships( @list_of_dates )
+
+Returns the number of Memberships within the set that were renewals,
+i.e. whose currently active term was not the first term, on a given
+date, or range of dates. Takes a date-time or a range of date-times
+in ISO-ish format.
+
+Returns a scalar value when called with one date, or a hashref of
+counts indexed by dates, if called with an array of date-times.
+
+=cut
+
+sub count_daily_were_renewal_memberships {
+  my $self = shift;
+  my @dates = @_;
+  my %counts;
+
+  ## First get all the terms 
+  my $sql = qq/ 
+    SELECT mid, id AS tid, start, end
+    FROM membership_entity_term
+  /;
+
+  my %current_mids;
+  my %current_tids;
+  my %ordered_terms;
+
+  ## get all the terms from the DB
+  my $terms = $self->{'dbh'}->selectall_hashref( $sql, 'tid' );
+  
+  foreach my $term ( values %{ $terms } ) { 
+    # indexed by mid, but terms indexed by start time for easier sorting
+    $ordered_terms{ $term->{'mid'} }->{ $term->{'start'} } = $term->{'tid'};
+  }
+
+  ## loop through the dates
+  foreach my $datetime ( @dates ) {
+
+    ## find the ones that were current on the date
+    foreach my $term ( values %{ $terms } ) {
+      next unless $datetime gt $term->{'start'} and $term->{'end'} gt $datetime;
+   
+      $current_mids{ $term->{'mid'} }++;
+      $current_tids{ $term->{'tid'} }++;
+    }   
+
+    # Now process each mid
+    foreach my $mid ( keys %ordered_terms ) { 
+      
+      # only keep it if it had a current term, i.e. was active
+      if ( ! exists $current_mids{ $mid } ) { 
+        delete $ordered_terms{ $mid };
+        next;
+      }
+    
+      # only keep it if it has at least two terms
+      if ( scalar keys %{ $ordered_terms{ $mid } } < 2 ) { 
+        delete $ordered_terms{ $mid };
+        next;
+      }   
+    }
+  
+    # if the mem is still here, it has a current term and more than one term.
+    # shift the earliest one off; the rest are renewals; is one of them current? 
+    my %were_renewal_memberships;
+
+    foreach my $mid ( keys %ordered_terms ) {
+    
+      my $term_count = 0;
+      
+      foreach my $start (sort keys %{ $ordered_terms{ $mid } } ) {
+        $term_count++;
+        next if $term_count == 1;
+        
+        if ( exists $current_tids{ $ordered_terms{ $mid }->{ $start } } ) {
+          $were_renewal_memberships{ $mid } = 1;
+        }
+      }
+    }
+
+    $counts{ $datetime } = scalar keys %were_renewal_memberships;
+  }
+
+  return (scalar keys %counts == 1) ?
+               $counts{ $dates[0] } :
+               \%counts;
+
+} # end sub 
 
 =method count_daily_term_expirations( @list_of_dates )
 
