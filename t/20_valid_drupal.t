@@ -55,6 +55,7 @@ use Cwd qw/ abs_path /;
 my $me = abs_path($0);
 
 use Test::More tests => 3;
+use Test::Exception;
 
 use CMS::Drupal;
 use CMS::Drupal::Modules::MembershipEntity;
@@ -87,18 +88,18 @@ SKIP: {
   my $dbh;
 
   subtest 'Object instantiation', sub {
-    plan tests => 2;
+    plan tests => 3;
 
     can_ok( 'CMS::Drupal', 'new' );
-    $drupal = CMS::Drupal->new;
+    lives_ok { $drupal = CMS::Drupal->new };
     isa_ok( $drupal, 'CMS::Drupal');
   };
 
   subtest 'Connect to the Drupal', sub {
-    plan tests => 2;
+    plan tests => 3;
 
     can_ok( 'CMS::Drupal', 'dbh' );
-    $dbh = $drupal->dbh( %params );
+    lives_ok { $dbh = $drupal->dbh( %params ) };
     isa_ok( $dbh, 'DBI::db');
   };
 
