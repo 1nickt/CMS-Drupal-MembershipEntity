@@ -1,5 +1,14 @@
 {{$NEXT}}
 
+Implement Test::Exception in the test suite
+
+Return the object directly when fetch_memberships() is
+called with a single mid
+
+Add historical count of renewal memberships
+
+0.92      2015-07-25 15:31:43-07:00 America/Los_Angeles
+
 Methods to provide counts from past dates
 
 Utility methods in Stats.pm
