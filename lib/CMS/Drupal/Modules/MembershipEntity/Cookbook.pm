@@ -62,6 +62,65 @@ can still test by finding the CPAN build directory and just running
 
   $ perl t/02_valid_drupal.t
 
+=head1 USING THE MODULES
+
+You'll need to load the libraries in any script or program you write.
+First you need to get a connection to your Drupal database. This is
+done through the L<CMS::Drupal|CMS::Drupal> parent module:
+
+  #!/usr/bin/perl -w
+  use strict;
+  use CMS::Drupal;
+ 
+  my $drupal = CMS::Drupal->new;
+  my $dbh    = $drupal->dbh(
+    'database' => "my_db",
+    'driver'   => "mysql",
+    'username' => "my_user",
+    'password' => "my_password"
+  );
+  
+Once you have a DB connection you can make use of the Membership Entity
+modules. Again, you'll have to load them with use():
+
+  #!/usr/bin/perl -w
+  use strict;
+  use CMS::Drupal;
+  use CMS::Drupal::Modules::MembershipEntity;
+
+  my $drupal = CMS::Drupal->new;
+  my $dbh    = $drupal->dbh(
+    'database' => "my_db",
+    'driver'   => "mysql",
+    'username' => "my_user",
+    'password' => "my_password"
+  );
+  
+  my $ME = CMS::Drupal::Modules::MembershipEntity->new( dbh => $dbh );
+  my $h  = $ME->fetch_memberships('all');
+
+Now you have a hashref containing all our Memberships, and you can work
+with each one:
+
+  foreach my $mid ( keys %{ $h } ) {
+    
+    if ( $h->{ $mid }->is_active ) {
+      $active_count++;
+    }
+    
+    # pass the Membership object to a sub you wrote
+    frobinate_member( $h->{ $mid } ); 
+
+  }
+
+If you just want to fetch one Membership, just pass a single mid to the 
+fetch_memberships() method, and you'll get a single object returned 
+instead of a hashref:
+
+  my $mem = $ME->fetch_memberships( 12345 );
+  print $mem->type;
+  frobinate_member( $mem );
+
 =head1 DATA ANALYSIS
 
 The creation of this distribution was originally motivated by the lack of
@@ -305,6 +364,7 @@ like this:
  {
   'count_daily_term_expirations' => '1',
   'count_daily_new_memberships' => '2',
+  'count_daily_were_renewal_memberships' => '224',
   'count_daily_total_memberships' => '1498',
   'count_daily_new_terms' => '3',
   'count_daily_term_activations' => '2',
@@ -330,7 +390,8 @@ So now you can do something in your nightly program something like:
   my $sth = $dbh->prepare( $sql );
 
   my @exclude = qw/ count_daily_total_memberships
-                    count_daily_term_activations /;
+                    count_daily_term_activations
+                    count_daily_were_renewal_memberships /;
 
   my $yesterday = $ME->report_yesterday( \@exclude );
 
