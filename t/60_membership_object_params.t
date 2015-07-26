@@ -10,6 +10,7 @@ BEGIN {
 
 use Test::More tests => 2;
 use Test::Group;
+use Test::Exception;
 
 use CMS::Drupal;
 use CMS::Drupal::Modules::MembershipEntity;
@@ -41,7 +42,7 @@ subtest 'fetch_memberships() returns ::Membership objects', sub {
 };
 
 subtest 'Manually create a ::Membership object', sub {
-  plan tests => 10;
+  plan tests => 11;
  
   my %params = (
     'mid'       => 666,
@@ -54,19 +55,21 @@ subtest 'Manually create a ::Membership object', sub {
     'terms'     => { 23456 => bless( {}, 'CMS::Drupal::Modules::MembershipEntity::Term' ) },
   );  
   
-  ok( ! eval { my $mem = CMS::Drupal::Modules::MembershipEntity::Membership->new },
-      'Correctly fail to create an object with no parameters provided.' );
+  dies_ok { my $mem = CMS::Drupal::Modules::MembershipEntity::Membership->new }
+      'Correctly fail to create an object with no parameters provided.';
 
   foreach my $param (keys %params) {
     my %args = %params;
     delete $args{ $param };
-    ok( ! eval { my $mem = CMS::Drupal::Modules::MembershipEntity::Membership->new( \%args ) },
-      'Correctly fail to create object with missing parameter: '. $param );
+    dies_ok { my $mem = CMS::Drupal::Modules::MembershipEntity::Membership->new( \%args ) }
+      "Correctly fail to create object with missing parameter: $param";
   }
 
-  my $mem = CMS::Drupal::Modules::MembershipEntity::Membership->new( %params );
-  isa_ok( $mem, 'CMS::Drupal::Modules::MembershipEntity::Membership',
-    'Created object ' );
+  my $mem;
+  lives_ok { $mem = CMS::Drupal::Modules::MembershipEntity::Membership->new( %params ) }
+    'Created Membership object ';
+  isa_ok( $mem, 'CMS::Drupal::Modules::MembershipEntity::Membership' );
+
 };
 
 __END__

@@ -10,6 +10,7 @@ BEGIN {
 
 use Test::More tests => 2;
 use Test::Group;
+use Test::Exception;
 
 use CMS::Drupal;
 use CMS::Drupal::Modules::MembershipEntity;
@@ -60,14 +61,14 @@ subtest 'Manually create a ::Term object', sub {
     'array_position' => 1
   );  
   
-  ok( ! eval { my $term = CMS::Drupal::Modules::MembershipEntity::Term->new },
-      'Correctly fail to create an object with no parameters provided.' );
+  dies_ok { my $term = CMS::Drupal::Modules::MembershipEntity::Term->new }
+      'Correctly fail to create an object with no parameters provided.';
 
   foreach my $param (keys %params) {
     my %args = %params;
     delete $args{ $param };
-    ok( ! eval { my $term = CMS::Drupal::Modules::MembershipEntity::Terms->new( \%args ) },
-      'Correctly fail to create object with missing parameter: '. $param );
+    dies_ok { my $term = CMS::Drupal::Modules::MembershipEntity::Terms->new( \%args ) }
+      "Correctly fail to create object with missing parameter: $param";
   }
 
   my $term = CMS::Drupal::Modules::MembershipEntity::Term->new( %params );
