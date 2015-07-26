@@ -6,7 +6,6 @@ use Test::More tests => 4;
 use Test::Group;
 use DBI;
 use FindBin;
-use File::Slurp::Tiny qw/ read_file read_lines /;
 use Time::Local;
 
 BEGIN {
