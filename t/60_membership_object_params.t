@@ -27,8 +27,14 @@ subtest 'fetch_memberships() returns ::Membership objects', sub {
     my $array = $_;
     my $hashref = $ME->fetch_memberships( @{ $array } );
     test 'isa valid object for '. @$array .' mids', sub {
-      foreach my $mem ( values %{ $hashref } ) {
+      if (@$array == 1) {
+        # we don't have a hashref but an object
+        my $mem = $hashref;
         isa_ok( $mem, 'CMS::Drupal::Modules::MembershipEntity::Membership' );
+      } else {
+        foreach my $mem ( values %{ $hashref } ) {
+          isa_ok( $mem, 'CMS::Drupal::Modules::MembershipEntity::Membership' );
+        }
       }
     }; 
   }
