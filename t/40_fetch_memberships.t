@@ -8,9 +8,7 @@ BEGIN {
   $ENV{'DRUPAL_IGNORE_TEST_CREDS'} = 1;
 }
 
-# disable this line to see if it causes the failure on 
-# Strawberry Perl 5.14.3
-# use open ':std', ':encoding(utf8)';
+use open ':std', ':encoding(utf8)';
 use Test::More tests => 1;
 use Test::Group;
 use Test::Exception;
