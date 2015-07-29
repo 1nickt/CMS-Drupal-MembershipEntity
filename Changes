@@ -1,5 +1,9 @@
 {{$NEXT}}
 
+Bump version to force retest on CPAN; failure was
+reported on t/40_fetch_memberships.t but it looks
+bogus...
+
 0.93      2015-07-26 15:57:50-07:00 America/Los_Angeles
 
 Implement Test::Exception in the test suite
