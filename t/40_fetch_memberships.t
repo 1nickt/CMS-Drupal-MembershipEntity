@@ -10,7 +10,7 @@ BEGIN {
 
 # Bug in Strawberry Perl 5.14.3 with open.pm 
 # see http://www.perlmonks.org/?node_id=1136800
-use if ! ( $^O eq 'MSWin32' and $] =~ /5.014/' ), open => qw/ :std :encoding(utf8) /;
+use if ! ( $^O eq 'MSWin32' and $] =~ /5.014/ ), open => qw/ :std :encoding(utf8) /;
 
 use Test::More tests => 1;
 use Test::Group;
