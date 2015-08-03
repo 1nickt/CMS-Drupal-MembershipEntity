@@ -8,7 +8,10 @@ BEGIN {
   $ENV{'DRUPAL_IGNORE_TEST_CREDS'} = 1;
 }
 
-use open ':std', ':encoding(utf8)';
+# Bug in Strawberry Perl 5.14.3 with open.pm 
+# see http://www.perlmonks.org/?node_id=1136800
+use if ! ( $^O eq 'MSWin32' and $] eq '5.014003' ), open => qw/ :std :encoding(utf8) /;
+
 use Test::More tests => 1;
 use Test::Group;
 use Test::Exception;
