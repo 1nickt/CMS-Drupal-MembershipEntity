@@ -2,13 +2,13 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 2;
 use Test::Exception;
 use DBI;
+use DBD::SQLite;
 
 BEGIN {
   use_ok( 'CMS::Drupal::Modules::MembershipEntity' ) or die;
-  use_ok( 'DBD::SQLite' ) or die;
 }
 
 subtest 'Parameter validation and object instantiation', sub {

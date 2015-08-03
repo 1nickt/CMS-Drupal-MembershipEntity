@@ -15,6 +15,7 @@ use Test::More;
 use Test::Group;
 use File::Slurper qw/ read_text read_lines /;
 use FindBin;
+use DBD::SQLite;
 use Time::Local;
 
 sub build_and_validate_test_db {
