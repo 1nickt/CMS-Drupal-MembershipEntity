@@ -1,5 +1,9 @@
 {{$NEXT}}
 
+Don't use open.pm with any version of Perl 5.14
+on MSWin32
+
+0.95      2015-08-02 22:39:04-07:00 America/Los_Angeles
 
 Don't use open.pm with Strawberry Perl 5.14.3
 (bug: see http://www.perlmonks.org/?node_id=1136800)
